@@ -3,7 +3,7 @@ import musicConnectLogo from '../../files/music-connect-logo.png';
 import TextField from '@mui/material/TextField';
 import { useState } from "react";
 import {Button} from "@mui/material";
-import {useNavigate} from "react-router-dom";
+import {useNavigate} from "react-router";
 // import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 // import { faCoffee } from '@fortawesome/free-solid-svg-icons';
 
@@ -29,7 +29,7 @@ const CreateAccountPage = () => {
         }
         else {
             setMessage("Account created. Redirecting to login.");
-            setTimeout(() => navigate("/login"), 3000);
+            setTimeout(() => navigate("/login"), 2000);
         }
         setLoading(false);
     }

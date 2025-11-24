@@ -9,7 +9,7 @@ const Header = () => {
     }
 
     return (
-        <div className={"header-container"}>
+        <div className={"header-container"} aria-labelledby="header-container">
             <a href={'/'}><img src={musicConnectLogo} className={"logo"} alt={"MusicConnect Logo"}/></a>
             <ButtonGroup variant="text" sx={{ borderColor: "#20B654" }}>
                 <Button sx={{ color: "#20B654" }}>Help</Button>

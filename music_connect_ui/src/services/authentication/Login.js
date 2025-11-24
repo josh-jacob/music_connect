@@ -4,10 +4,8 @@ import spotifyLogo from '../../files/spotify-logo.png';
 import youTubeMusicLogo from '../../files/youtube-music-logo.png';
 import Header from '../../components/Header';
 import TextField from '@mui/material/TextField';
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {Button} from "@mui/material";
-// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-// import { faCoffee } from '@fortawesome/free-solid-svg-icons';
 
 const LoginPage = ({type="MusicConnect"}) => {
 
@@ -19,14 +17,18 @@ const LoginPage = ({type="MusicConnect"}) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
 
-    if (type === "Spotify") {
-        setLogo(spotifyLogo);
-        setColour("#1ED760");
-    }
-    if (type === "YouTube Music") {
-        setLogo(youTubeMusicLogo);
-        setColour("#FF0000");
-    }
+    useEffect(() => {
+        if (type === "Spotify") {
+            setLogo(spotifyLogo);
+            setColour("#1ED760");
+        } else if (type === "YouTube Music") {
+            setLogo(youTubeMusicLogo);
+            setColour("#FF0000");
+        } else {
+            setLogo(musicConnectLogo);
+            setColour("#20B654");
+        }
+    }, [type]);
 
     const authenticate = () => {
         setLoading(true);
@@ -43,7 +45,6 @@ const LoginPage = ({type="MusicConnect"}) => {
             <div className="auth-container">
                 <img className={"logo"} src={logo} alt={`${type} Logo`}/>
                 <div className={"auth-wrapper"}>
-                    {/* <FontAwesomeIcon icon={faCoffee} style={{ color: '#6f4e37', marginLeft: '8px' }} /> */}
                     <div className={"username-container"}>
                         <p className={"username-label"}>Username:</p>
                         <TextField hiddenLabel id="username-field" size="small" placeholder={"Username"} sx={{ width: '80%' }} />
@@ -57,7 +58,7 @@ const LoginPage = ({type="MusicConnect"}) => {
                 <div className={"auth-footer"}>
                     {type === "MusicConnect" ? <p className={"create-account"}>Don't have an account? <a href={'/create-account'}>Create Account</a></p> : <></>}
                     <p className={"login-error"}>{error ? "There was a problem logging you in. Please try again.": ""}</p>
-                    <Button className={"login-button"} variant="contained" loading={loading} loadingIndicator="Loading…" sx={{ backgroundColor: colour, color: "white", width: "100px" }} onClick={authenticate}>Login</Button>
+                    <Button className={"login-button"} variant="contained" loading={loading} loadingIndicator="Loading…" sx={{ backgroundColor: colour, color: "white", width: "100px" }} onClick={() => authenticate}>Login</Button>
                 </div>
             </div>
         </div>
