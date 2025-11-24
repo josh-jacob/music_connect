@@ -11,8 +11,8 @@ const DashboardPage = () => {
             <div className="dashboard-page-content">
                 <SearchBar />
                 <div className="service-cards">
-                    <ServiceButton service="YouTube Music" serviceURL="/youtube-music" icon={faYoutube} colour="red"/>
-                    <ServiceButton service="Spotify" serviceURL="/spotify" icon={faSpotify} colour="#1ED760"/>
+                    <ServiceButton className={"YouTube Music Service"} service="YouTube Music" serviceURL="/youtube-music" icon={faYoutube} colour="red"/>
+                    <ServiceButton className={"Spotify Service"} service="Spotify" serviceURL="/spotify" icon={faSpotify} colour="#1ED760"/>
                 </div>
 
             </div>
