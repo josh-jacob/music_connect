@@ -5,7 +5,7 @@ import youTubeMusicLogo from '../../files/youtube-music-logo.png';
 import Header from '../../components/Header';
 import TextField from '@mui/material/TextField';
 import {useEffect, useState} from "react";
-import {Button} from "@mui/material";
+import {Alert, Button} from "@mui/material";
 
 const LoginPage = ({type="MusicConnect"}) => {
 
@@ -57,7 +57,7 @@ const LoginPage = ({type="MusicConnect"}) => {
                 </div>
                 <div className={"auth-footer"}>
                     {type === "MusicConnect" ? <p className={"create-account"}>Don't have an account? <a href={'/create-account'}>Create Account</a></p> : <></>}
-                    <p className={"login-error"}>{error ? "There was a problem logging you in. Please try again.": ""}</p>
+                    {error ? <Alert severity="error">There was a problem logging you in. Please try again.</Alert>: ""}
                     <Button className={"login-button"} variant="contained" loading={loading} loadingIndicator="Loading…" sx={{ backgroundColor: colour, color: "white", width: "100px" }} onClick={() => authenticate}>Login</Button>
                 </div>
             </div>

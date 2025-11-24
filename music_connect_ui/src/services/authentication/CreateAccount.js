@@ -2,7 +2,7 @@ import './CreateAccount.css';
 import musicConnectLogo from '../../files/music-connect-logo.png';
 import TextField from '@mui/material/TextField';
 import { useState } from "react";
-import {Button} from "@mui/material";
+import {Alert, Button} from "@mui/material";
 import {useNavigate} from "react-router";
 // import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 // import { faCoffee } from '@fortawesome/free-solid-svg-icons';
@@ -51,7 +51,7 @@ const CreateAccountPage = () => {
                     </div>
                 </div>
                 <div className={"auth-footer"}>
-                    <p className={"login-message"} style={{ color: error ? "red" : "#20B654" }}>{message}</p>
+                    {message !== "" ? <Alert severity={error ? "error" : "success"}>{message}</Alert> : null}
                     <Button className={"create-account-button"} variant="contained" loading={loading} loadingIndicator="Loading…" sx={{ backgroundColor: "#20B654", color: "white", width: "100px" }} onClick={createAccount}>Create</Button>
                 </div>
             </div>

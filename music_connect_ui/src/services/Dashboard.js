@@ -1,6 +1,8 @@
 import './Dashboard.css';
 import Header from "../components/Header";
 import SearchBar from "../components/SearchBar";
+import ServiceButton from "../components/ServiceButton";
+import { faYoutube, faSpotify } from '@fortawesome/free-brands-svg-icons';
 
 const DashboardPage = () => {
     return (
@@ -8,7 +10,11 @@ const DashboardPage = () => {
             <Header />
             <div className="dashboard-page-content">
                 <SearchBar />
-                {/* service button component*/}
+                <div className="service-cards">
+                    <ServiceButton service="YouTube Music" serviceURL="/youtube-music" icon={faYoutube} colour="red"/>
+                    <ServiceButton service="Spotify" serviceURL="/spotify" icon={faSpotify} colour="#1ED760"/>
+                </div>
+
             </div>
         </div>
     );

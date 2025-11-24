@@ -7,7 +7,6 @@ import { faSearch } from '@fortawesome/free-solid-svg-icons';
 
 const SearchBar = ({service="MusicConnect", onSearch}) => {
     const [query, setQuery] = useState('');
-
     const handleSearch = () => {
         // call search slice send query to be searched
     };

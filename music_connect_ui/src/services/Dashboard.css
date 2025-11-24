@@ -1,0 +1,9 @@
+.dashboard-page-content {
+    padding: 10px;
+    .service-cards {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-evenly;
+        margin: 50px 150px;
+    }
+}
