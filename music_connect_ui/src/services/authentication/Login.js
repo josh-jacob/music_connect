@@ -6,8 +6,10 @@ import Header from '../../components/Header';
 import TextField from '@mui/material/TextField';
 import {useEffect, useState} from "react";
 import {Alert, Button} from "@mui/material";
+import {useNavigate} from "react-router";
 
 const LoginPage = ({type="MusicConnect"}) => {
+    const navigate = useNavigate();
 
     const [showPassword, setShowPassword] = useState(false);
     const [logo, setLogo] = useState(musicConnectLogo);
@@ -58,6 +60,7 @@ const LoginPage = ({type="MusicConnect"}) => {
                 <div className={"auth-footer"}>
                     {type === "MusicConnect" ? <p className={"create-account"}>Don't have an account? <a href={'/create-account'}>Create Account</a></p> : <></>}
                     {error ? <Alert severity="error">There was a problem logging you in. Please try again.</Alert>: ""}
+                    {type !== "MusicConnect" ? <Button className={"stay-unauthenticated"} variant="contained" sx={{ backgroundColor: colour, color: "white", width: "100px" }} onClick={() => {type === "Spotify" ? navigate("/spotify") : navigate("/youtube-music")}} >Stay Unauthenticated</Button> : null}
                     <Button className={"login-button"} variant="contained" loading={loading} loadingIndicator="Loading…" sx={{ backgroundColor: colour, color: "white", width: "100px" }} onClick={() => authenticate}>Login</Button>
                 </div>
             </div>

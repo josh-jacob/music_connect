@@ -51,6 +51,11 @@
         color: red;
     }
 
+    .stay-unauthenticated {
+        float: left;
+        width: fit-content;
+    }
+
     .login-button {
         float: right;
     }
