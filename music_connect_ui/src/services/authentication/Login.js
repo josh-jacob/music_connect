@@ -6,10 +6,12 @@ import Header from '../../components/Header';
 import TextField from '@mui/material/TextField';
 import {useEffect, useState} from "react";
 import {Alert, Button} from "@mui/material";
-import {useNavigate} from "react-router";
+import {useNavigate, useParams} from "react-router";
 
-const LoginPage = ({type="MusicConnect"}) => {
+const LoginPage = () => {
     const navigate = useNavigate();
+    const params = useParams()
+    const type = params.serviceId;
 
     const [showPassword, setShowPassword] = useState(false);
     const [logo, setLogo] = useState(musicConnectLogo);
@@ -20,10 +22,10 @@ const LoginPage = ({type="MusicConnect"}) => {
     const [error, setError] = useState(false);
 
     useEffect(() => {
-        if (type === "Spotify") {
+        if (type === "spotify") {
             setLogo(spotifyLogo);
             setColour("#1ED760");
-        } else if (type === "YouTube Music") {
+        } else if (type === "youtube-music") {
             setLogo(youTubeMusicLogo);
             setColour("#FF0000");
         } else {
@@ -43,7 +45,7 @@ const LoginPage = ({type="MusicConnect"}) => {
 
     return (
         <div>
-            {type !== "MusicConnect" ? <Header /> : <></>}
+            {type !== "music-connect" ? <Header /> : <></>}
             <div className="auth-container">
                 <img className={"logo"} src={logo} alt={`${type} Logo`}/>
                 <div className={"auth-wrapper"}>
@@ -58,9 +60,9 @@ const LoginPage = ({type="MusicConnect"}) => {
                     </div>
                 </div>
                 <div className={"auth-footer"}>
-                    {type === "MusicConnect" ? <p className={"create-account"}>Don't have an account? <a href={'/create-account'}>Create Account</a></p> : <></>}
+                    {type === "music-connect" ? <p className={"create-account"}>Don't have an account? <a href={'/create-account'}>Create Account</a></p> : <></>}
                     {error ? <Alert severity="error">There was a problem logging you in. Please try again.</Alert>: ""}
-                    {type !== "MusicConnect" ? <Button className={"stay-unauthenticated"} variant="contained" sx={{ backgroundColor: colour, color: "white", width: "100px" }} onClick={() => {type === "Spotify" ? navigate("/spotify") : navigate("/youtube-music")}} >Stay Unauthenticated</Button> : null}
+                    {type !== "music-connect" ? <Button className={"stay-unauthenticated"} variant="contained" sx={{ backgroundColor: colour, color: "white", width: "100px" }} onClick={() => {type === "spotify" ? navigate("/spotify") : navigate("/youtube-music")}} >Stay Unauthenticated</Button> : null}
                     <Button className={"login-button"} variant="contained" loading={loading} loadingIndicator="Loading…" sx={{ backgroundColor: colour, color: "white", width: "100px" }} onClick={() => authenticate}>Login</Button>
                 </div>
             </div>

@@ -29,7 +29,7 @@ const CreateAccountPage = () => {
         }
         else {
             setMessage("Account created. Redirecting to login.");
-            setTimeout(() => navigate("/login"), 2000);
+            setTimeout(() => navigate("/music-connect/login"), 2000);
         }
         setLoading(false);
     }

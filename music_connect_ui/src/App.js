@@ -17,7 +17,7 @@ function App() {
         <Router>
             <AuthProvider>
                 <Routes>
-                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/:serviceId/login" element={<LoginPage />} />
                     <Route path="/create-account" element={<CreateAccountPage />} />
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/spotify" element={<SpotifyServicePage />} />
