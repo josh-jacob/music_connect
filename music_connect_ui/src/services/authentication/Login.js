@@ -6,14 +6,11 @@ import Header from '../../components/Header';
 import TextField from '@mui/material/TextField';
 import {useEffect, useState} from "react";
 import {Alert, Button} from "@mui/material";
-import {useNavigate, useParams} from "react-router";
+import {useNavigate} from "react-router";
 
-const LoginPage = () => {
+const LoginPage = ({ type }) => {
     const navigate = useNavigate();
-    const params = useParams()
-    const type = params.serviceId;
 
-    const [showPassword, setShowPassword] = useState(false);
     const [logo, setLogo] = useState(musicConnectLogo);
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");

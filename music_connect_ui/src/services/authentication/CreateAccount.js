@@ -4,13 +4,10 @@ import TextField from '@mui/material/TextField';
 import { useState } from "react";
 import {Alert, Button} from "@mui/material";
 import {useNavigate} from "react-router";
-// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-// import { faCoffee } from '@fortawesome/free-solid-svg-icons';
 
 const CreateAccountPage = () => {
     const navigate = useNavigate();
 
-    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
     const [username, setUsername] = useState("");
@@ -21,11 +18,20 @@ const CreateAccountPage = () => {
         setLoading(true);
         setError(false);
 
-        // call UserSlice to create account.
+        if (username.length < 1 || password.length < 5) {
+            setError(true);
+        }
+        else {
+            // call UserSlice to create account.
+        }
 
         if (error) {
-            setError(true);
-            setMessage("There was a problem creating your account. Please try again.");
+            if (username.length < 1 || password.length < 5) {
+                setMessage("Invalid username or password. Your username must be at least 1 character in length. Your password must be at least 5 characters in length.");
+            }
+            else {
+                setMessage("There was a problem creating your account. Please try again.");
+            }
         }
         else {
             setMessage("Account created. Redirecting to login.");

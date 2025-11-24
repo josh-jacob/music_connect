@@ -25,3 +25,9 @@
         margin-right: 40px;
     }
 }
+
+.playlists-container {
+    text-align: left;
+    padding-left: 90px;
+    padding-top: 0;
+}

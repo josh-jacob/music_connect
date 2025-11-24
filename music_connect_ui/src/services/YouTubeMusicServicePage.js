@@ -38,13 +38,14 @@ const YouTubeMusicServicePage = () => {
             <div className={"playlists"}>
                 <div className={"playlist-header"}>
                     <h2 className={"playlist-title"}>My Playlists</h2>
-                    <Tooltip title="Create New Playlist" placement="top-end">
+                    {isLoggedIn ? <Tooltip title="Create New Playlist" placement="top-end">
                         <IconButton onClick={createPlaylist}>
                             <FontAwesomeIcon icon={faPlusCircle} color="red" />
                         </IconButton>
-                    </Tooltip>
+                    </Tooltip> : null }
                 </div>
                 <div className={"playlists-container"}>
+                    {!isLoggedIn ? <p className="playlist-unauthenticated">Sign into YouTube Music to see user playlists.</p> : null}
                     {/* for each playlist create new PlaylistItem using data from api*/}
                 </div>
             </div>

@@ -17,11 +17,13 @@ function App() {
         <Router>
             <AuthProvider>
                 <Routes>
-                    <Route path="/:serviceId/login" element={<LoginPage />} />
+                    <Route path="/music-connect/login" element={<LoginPage type="music-connect"/>} />
                     <Route path="/create-account" element={<CreateAccountPage />} />
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/spotify" element={<SpotifyServicePage />} />
                     <Route path="/youtube-music" element={<YouTubeMusicServicePage />} />
+                    <Route path="/spotify/login" element={<LoginPage type="spotify"/>} />
+                    <Route path="/youtube-music/login" element={<LoginPage type="youtube-music"/>} />
                     <Route path="/search" element={<SearchServicePage />} />
                     <Route path="/export" element={<ExportServicePage />} />
                     {/* authenticated routes

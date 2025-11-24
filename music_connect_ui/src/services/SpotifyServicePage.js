@@ -39,14 +39,15 @@ const SpotifyServicePage = () => {
             <div className={"playlists"}>
                 <div className={"playlist-header"}>
                     <h2 className={"playlist-title"}>My Playlists</h2>
-                    <Tooltip title="Create New Playlist" placement="top-end">
+                    {isLoggedIn ? <Tooltip title="Create New Playlist" placement="top-end">
                         <IconButton onClick={createPlaylist}>
                             <FontAwesomeIcon icon={faPlusCircle} color="#1ED760" />
                         </IconButton>
-                    </Tooltip>
+                    </Tooltip> : null }
                 </div>
                 <div className={"playlists-container"}>
                     {/* for each playlist create new PlaylistItem using data from api*/}
+                    { !isLoggedIn ? <p className="playlist-unauthenticated">Sign into Spotify to see user playlists.</p> : null }
                 </div>
             </div>
         </div>
