@@ -3,7 +3,7 @@ import Header from "../components/Header";
 import SearchBar from "../components/SearchBar";
 import ServiceButton from "../components/ServiceButton";
 import { faYoutube, faSpotify } from '@fortawesome/free-brands-svg-icons';
-import { faFileExport } from '@fortawesome/free-solid-svg-icons'
+import { faFileExport } from '@fortawesome/free-solid-svg-icons';
 
 const DashboardPage = () => {
     return (

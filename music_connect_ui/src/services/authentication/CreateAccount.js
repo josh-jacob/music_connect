@@ -48,12 +48,12 @@ const CreateAccountPage = () => {
                     {/* <FontAwesomeIcon icon={faCoffee} style={{ color: '#6f4e37', marginLeft: '8px' }} /> */}
                     <div className={"username-container"}>
                         <p className={"username-label"}>Enter Username:</p>
-                        <TextField hiddenLabel id="username-field" size="small" placeholder={"Username"} sx={{ width: '60%' }} />
+                        <TextField hiddenLabel id="username-field" size="small" placeholder={"Username"} sx={{ width: '60%' }} onChange={(e) => setUsername(e.target.value)} />
                     </div>
                     <div className={"password-container"}>
                         <p className={"password-label"}>Enter New Password:</p>
                         <div className={"password-label"}></div>
-                        <TextField hiddenLabel id="password-field" size="small" type={"password"} placeholder={"Password"} sx={{ width: '60%' }} />
+                        <TextField hiddenLabel id="password-field" size="small" type={"password"} placeholder={"Password"} sx={{ width: '60%' }} onChange={(e) => setPassword(e.target.value)} />
                     </div>
                 </div>
                 <div className={"auth-footer"}>

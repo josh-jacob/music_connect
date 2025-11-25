@@ -48,18 +48,18 @@ const LoginPage = ({ type }) => {
                 <div className={"auth-wrapper"}>
                     <div className={"username-container"}>
                         <p className={"username-label"}>Username:</p>
-                        <TextField hiddenLabel id="username-field" size="small" placeholder={"Username"} sx={{ width: '80%' }} />
+                        <TextField hiddenLabel id="username-field" size="small" placeholder={"Username"} sx={{ width: '80%' }} onChange={(e) => setUsername(e.target.value)} />
                     </div>
                     <div className={"password-container"}>
                         <p className={"password-label"}>Password:</p>
                         <div className={"password-label"}></div>
-                        <TextField hiddenLabel id="password-field" size="small" type={"password"} placeholder={"Password"} sx={{ width: '80%' }} />
+                        <TextField hiddenLabel id="password-field" size="small" type={"password"} placeholder={"Password"} sx={{ width: '80%' }} onChange={(e) => setPassword(e.target.value)} />
                     </div>
                 </div>
                 <div className={"auth-footer"}>
                     {type === "music-connect" ? <p className={"create-account"}>Don't have an account? <a href={'/create-account'}>Create Account</a></p> : <></>}
                     {error ? <Alert severity="error">There was a problem logging you in. Please try again.</Alert>: ""}
-                    {type !== "music-connect" ? <Button className={"stay-unauthenticated"} variant="contained" sx={{ backgroundColor: colour, color: "white", width: "100px" }} onClick={() => {type === "spotify" ? navigate("/spotify") : navigate("/youtube-music")}} >Stay Unauthenticated</Button> : null}
+                    {type !== "music-connect" ? <Button className={"stay-unauthenticated"} variant="contained" sx={{ backgroundColor: "black", color: "white", width: "100px" }} onClick={() => {type === "spotify" ? navigate("/spotify") : navigate("/youtube-music")}} >Stay Unauthenticated</Button> : null}
                     <Button className={"login-button"} variant="contained" loading={loading} loadingIndicator="Loading…" sx={{ backgroundColor: colour, color: "white", width: "100px" }} onClick={() => authenticate}>Login</Button>
                 </div>
             </div>
