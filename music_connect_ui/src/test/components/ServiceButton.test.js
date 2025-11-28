@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react';
-import ServiceButton from '../components/ServiceButton';
+import ServiceButton from '../../components/ServiceButton';
 import '@testing-library/jest-dom';
 
 describe('ServiceButton Component', () => {

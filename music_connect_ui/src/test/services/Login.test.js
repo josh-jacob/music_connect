@@ -1,7 +1,7 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent } from '@testing-library/react';
-import LoginPage from '../services/authentication/Login';
+import LoginPage from '../../services/authentication/Login';
 
 describe('LoginPage Component', () => {
     test('renders MusicConnect logo when default type is MusicConnect', () => {

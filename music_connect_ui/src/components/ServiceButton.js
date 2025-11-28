@@ -6,8 +6,8 @@ const ServiceButton = ({service, serviceURL, icon, colour}) => {
     return (
         <Card className="ServiceButton" component="section">
             <a className={service} href={serviceURL}>
-                <FontAwesomeIcon icon={icon} size="10x" color={colour}/>
-                <h2 style={{ color: "black" }}>{service}</h2>
+                <FontAwesomeIcon icon={icon} size="5x" color={colour}/>
+                <h3 style={{ color: "black" }}>{service}</h3>
             </a>
         </Card>
     );

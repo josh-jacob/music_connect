@@ -1,6 +1,6 @@
 import React from 'react';
 import {render} from '@testing-library/react';
-import DashboardPage from '../services/Dashboard';
+import DashboardPage from '../../services/Dashboard';
 import '@testing-library/jest-dom';
 
 describe('DashboardPage Component', () => {

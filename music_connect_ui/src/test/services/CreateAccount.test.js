@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import CreateAccountPage from './../services/authentication/CreateAccount';
+import CreateAccountPage from '../../services/authentication/CreateAccount';
 import { useNavigate } from 'react-router';
 import '@testing-library/jest-dom';
 import {wait} from "@testing-library/user-event/dist/utils";

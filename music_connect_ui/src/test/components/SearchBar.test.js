@@ -1,7 +1,7 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 import { render, fireEvent } from '@testing-library/react';
-import SearchBar from '../components/SearchBar';
+import SearchBar from '../../components/SearchBar';
 
 describe('SearchBar Component', () => {
     test('renders correctly with default service', () => {

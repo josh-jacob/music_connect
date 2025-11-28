@@ -2,7 +2,6 @@
 
 ## System Requirements
 ### Install Dependencies
-Install **Docker Desktop** from https://docs.docker.com/desktop/setup/install/windows-install/<br><br>
 **Download Node Version Manager** from https://github.com/coreybutler/nvm-windows/releases <br>
 **node:** version 25<br>
 ``nvm install 25.2.1``<br>

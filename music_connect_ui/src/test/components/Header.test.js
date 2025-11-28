@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import Header from './../components/Header';
+import Header from '../../components/Header';
 import '@testing-library/jest-dom';
 
 // Mock the UserSlice logout function, if needed.
-jest.mock('../slices/UserSlice', () => ({
+jest.mock('../../slices/UserSlice', () => ({
     logout: jest.fn(),
 }));
 
@@ -23,7 +23,7 @@ describe('Header Component', () => {
 
     test.skip('logout button calls handleLogout on click', () => {
         // You may want to mock out the logout function as needed
-        const { logout } = require('../slices/UserSlice');
+        const { logout } = require('../../slices/UserSlice');
         render(<Header />);
 
         const logoutButton = screen.getByRole('button', { name: /logout/i });
