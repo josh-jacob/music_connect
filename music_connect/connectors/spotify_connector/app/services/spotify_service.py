@@ -6,7 +6,7 @@ import requests
 from fastapi import HTTPException
 
 from app.config import settings
-from app.storage import token_store
+from app.storage import token_manager
 from app.interfaces.music_service_interface import MusicServiceInterface
 from app.utils.logger import get_logger
 
@@ -19,13 +19,18 @@ API_BASE = "https://api.spotify.com/v1"
 
 class SpotifyService(MusicServiceInterface):
 
+    # ----------------------------------------------------
+    #  BUILD AUTH URL
+    # ----------------------------------------------------
     @classmethod
     def build_auth_url(cls, user_id: str) -> Dict[str, str]:
         import uuid
         from urllib.parse import urlencode
 
         state = uuid.uuid4().hex
-        token_store.set_state(state, user_id)
+
+        # ⭐ CORRECT NAME — must match TokenManager
+        token_manager.set_state(state, user_id)
 
         params = {
             "client_id": settings.SPOTIFY_CLIENT_ID,
@@ -34,13 +39,21 @@ class SpotifyService(MusicServiceInterface):
             "scope": settings.SPOTIFY_SCOPES,
             "state": state,
         }
-        return {"auth_url": f"{AUTH_URL}?{urlencode(params)}", "state": state}
 
+        return {
+            "auth_url": f"{AUTH_URL}?{urlencode(params)}",
+            "state": state
+        }
+
+    # ----------------------------------------------------
+    #  CALLBACK HANDLER
+    # ----------------------------------------------------
     @classmethod
     def handle_auth_callback(cls, code: str, state: str):
-        user_id = token_store.pop_state(state)
+        # ⭐ CORRECT — pop the state, get user_id
+        user_id = token_manager.pop_state(state)
         if not user_id:
-            raise HTTPException(400, "Invalid state")
+            raise HTTPException(400, "Invalid or expired state")
 
         client_creds = f"{settings.SPOTIFY_CLIENT_ID}:{settings.SPOTIFY_CLIENT_SECRET}"
         b64 = base64.b64encode(client_creds.encode()).decode()
@@ -60,18 +73,22 @@ class SpotifyService(MusicServiceInterface):
             raise HTTPException(resp.status_code, resp.text)
 
         payload = resp.json()
-        token_store.put_tokens(user_id, {
+        expires_at = int(time.time()) + payload["expires_in"]
+
+        token_manager.store_tokens(user_id, {
             "access_token": payload["access_token"],
             "refresh_token": payload.get("refresh_token"),
-            "expires_at": int(time.time()) + payload["expires_in"],
+            "expires_at": expires_at,
         })
 
         return {"status": "ok", "user_id": user_id}
 
-    # ---- Internal helpers ----
+    # ----------------------------------------------------
+    #  INTERNAL HELPERS
+    # ----------------------------------------------------
 
     def _ensure_token(self):
-        tokens = token_store.get_tokens(self.user_id)
+        tokens = token_manager.get_tokens(self.user_id)
         if not tokens:
             raise HTTPException(401, "Authenticate with /auth/login first")
 
@@ -81,7 +98,7 @@ class SpotifyService(MusicServiceInterface):
         return tokens["access_token"]
 
     def _refresh(self):
-        tokens = token_store.get_tokens(self.user_id)
+        tokens = token_manager.get_tokens(self.user_id)
         refresh_token = tokens.get("refresh_token")
 
         client_creds = f"{settings.SPOTIFY_CLIENT_ID}:{settings.SPOTIFY_CLIENT_SECRET}"
@@ -97,20 +114,21 @@ class SpotifyService(MusicServiceInterface):
             raise HTTPException(resp.status_code, resp.text)
 
         payload = resp.json()
-        new_access = payload["access_token"]
-        expires_at = int(time.time()) + payload["expires_in"]
 
-        tokens["access_token"] = new_access
-        tokens["expires_at"] = expires_at
-        token_store.put_tokens(self.user_id, tokens)
+        tokens["access_token"] = payload["access_token"]
+        tokens["expires_at"] = int(time.time()) + payload["expires_in"]
 
-        return new_access
+        token_manager.store_tokens(self.user_id, tokens)
+
+        return tokens["access_token"]
 
     def _headers(self):
         token = self._ensure_token()
         return {"Authorization": f"Bearer {token}"}
 
-    # ---- Interface Methods ----
+    # ----------------------------------------------------
+    #  SPOTIFY API WRAPPERS
+    # ----------------------------------------------------
 
     def get_user_profile(self):
         r = requests.get(f"{API_BASE}/me", headers=self._headers())
@@ -168,3 +186,5 @@ class SpotifyService(MusicServiceInterface):
             },
         )
         return r.json()
+
+
