@@ -1,87 +1,52 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
-from fastapi.responses import RedirectResponse
-from typing import Optional
-import base64
-import urllib.parse
-import requests
-from fastapi.responses import RedirectResponse
-from typing import Optional
-import base64
-import urllib.parse
-import requests
 
 from app.dependencies import get_user_id
 from app.services.spotify_service import SpotifyService
-from app.storage import token_manager
-from app.config import settings
+import requests
+from app.models.music_models import (
+    AddTracksRequest,
+    RemoveTracksRequest,
+    ReorderTracksRequest,
+    CreatePlaylistRequest,
+)
 
-# Spotify endpoints
-AUTH_URL = "https://accounts.spotify.com/authorize"
-TOKEN_URL = "https://accounts.spotify.com/api/token"
-from app.storage import token_manager
-from app.config import settings
+router = APIRouter(prefix="/music", tags=["music"])
 
-# Spotify endpoints
-AUTH_URL = "https://accounts.spotify.com/authorize"
-TOKEN_URL = "https://accounts.spotify.com/api/token"
+@router.get("/me")
+def me(user_id: str = Depends(get_user_id)):
+    return SpotifyService(user_id).get_user_profile()
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+@router.get("/playlists")
+def playlists(user_id: str = Depends(get_user_id)):
+    return SpotifyService(user_id).get_playlists()
 
+@router.get("/tracks")
+def tracks(user_id: str = Depends(get_user_id)):
+    return SpotifyService(user_id).get_saved_tracks()
 
+@router.post("/playlists")
+def create_playlist(data: CreatePlaylistRequest, user_id: str = Depends(get_user_id)):
+    return SpotifyService(user_id).create_playlist(data.name, data.description, data.public)
 
-@router.get("/login")
-async def login(user_id: str = Depends(get_user_id)):
-    """
-    Step 1: UI calls this → returns Spotify login URL.
-    """
-    """
-    Step 1: UI calls this → returns Spotify login URL.
-    """
-    return SpotifyService.build_auth_url(user_id)
+@router.post("/playlist/{id}/add")
+def add(id: str, data: AddTracksRequest, user_id: str = Depends(get_user_id)):
+    return SpotifyService(user_id).add_tracks_to_playlist(id, data.uris)
 
+@router.post("/playlist/{id}/remove")
+def remove(id: str, data: RemoveTracksRequest, user_id: str = Depends(get_user_id)):
+    return SpotifyService(user_id).remove_tracks_from_playlist(id, data.uris)
 
+@router.get("/search")
+def search(q: str = Query(...), user_id: str = Depends(get_user_id)):
+    service = SpotifyService(user_id=user_id)
 
-@router.get("/callback")
-def callback(
-    code: Optional[str] = Query(default=None),
-    state: Optional[str] = Query(default=None),
-    error: Optional[str] = Query(default=None),
-):
-    if error:
-        raise HTTPException(status_code=400, detail=f"OAuth error: {error}")
+    url = "https://api.spotify.com/v1/search"
+    params = {"q": q, "type": "track", "limit": 10}
 
-    if not code or not state:
-        raise HTTPException(status_code=400, detail="Missing 'code' or 'state'.")
+    r = requests.get(url, headers=service._headers(), params=params)
 
-    # ⭐ Get user_id linked to this state
-    user_id = token_manager.pop_state(state)
-    if not user_id:
-        raise HTTPException(status_code=400, detail="Invalid state — no matching user.")
+    if r.status_code != 200:
+        raise HTTPException(r.status_code, r.text)
 
-    # Build Basic Auth header
-    client_creds = f"{settings.SPOTIFY_CLIENT_ID}:{settings.SPOTIFY_CLIENT_SECRET}"
-    b64_client_creds = base64.b64encode(client_creds.encode()).decode()
-
-    data = {
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": settings.SPOTIFY_REDIRECT_URI,
-    }
-
-    headers = {
-        "Authorization": f"Basic {b64_client_creds}",
-        "Content-Type": "application/x-www-form-urlencoded",
-    }
-
-    # Exchange authorization code for tokens
-    resp = requests.post(TOKEN_URL, data=data, headers=headers, timeout=20)
-    if resp.status_code != 200:
-        raise HTTPException(status_code=resp.status_code, detail="Failed to exchange code for token.")
-
-    token_payload = resp.json()
-
-    # ⭐ Store tokens correctly: key = user_id
-    token_manager.store_tokens(user_id, token_payload)
-
-    # Redirect back to UI
-    return RedirectResponse("http://localhost:3000/spotify")
+    data = r.json()
+    return data.get("tracks", {}).get("items", [])
