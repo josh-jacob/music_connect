@@ -35,7 +35,7 @@ def callback(
     if not code or not state:
         raise HTTPException(status_code=400, detail="Missing 'code' or 'state'.")
 
-    # ⭐ Resolve the user from the stored state
+    # Resolve the user from the stored state
     user_id = token_manager.pop_state(state)
     if not user_id:
         raise HTTPException(status_code=400, detail="Invalid state — no matching user.")
