@@ -35,7 +35,7 @@ def callback(
     if not code or not state:
         raise HTTPException(status_code=400, detail="Missing 'code' or 'state'.")
 
-    # ⭐ Resolve the user from the stored state
+    # ⭐ Get user_id linked to this state
     user_id = token_manager.pop_state(state)
     if not user_id:
         raise HTTPException(status_code=400, detail="Invalid state — no matching user.")
@@ -62,15 +62,8 @@ def callback(
 
     token_payload = resp.json()
 
-    # ⭐ COMPUTE expires_at (REQUIRED FOR YOUR APP)
-    expires_at = int(time.time()) + token_payload["expires_in"]
-
-    # ⭐ Store properly
-    token_manager.store_tokens(user_id, {
-        "access_token": token_payload["access_token"],
-        "refresh_token": token_payload.get("refresh_token"),
-        "expires_at": expires_at,
-    })
+    # ⭐ Store tokens correctly: key = user_id
+    token_manager.store_tokens(user_id, token_payload)
 
     # Redirect to UI
     return RedirectResponse("http://localhost:3000/spotify")

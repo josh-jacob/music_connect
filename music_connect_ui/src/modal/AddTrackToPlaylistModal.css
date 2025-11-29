@@ -1,0 +1,10 @@
+.dialog-content {
+    display: flex;
+    padding: 10px;
+    align-items: center;
+    justify-content: center;
+
+    p {
+        padding-right: 5px;
+    }
+}

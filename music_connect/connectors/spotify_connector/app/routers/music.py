@@ -50,3 +50,18 @@ def search(q: str = Query(...), user_id: str = Depends(get_user_id)):
 
     data = r.json()
     return data.get("tracks", {}).get("items", [])
+
+@router.get("/search")
+def search(q: str = Query(...), user_id: str = Depends(get_user_id)):
+    service = SpotifyService(user_id=user_id)
+
+    url = "https://api.spotify.com/v1/search"
+    params = {"q": q, "type": "track", "limit": 10}
+
+    r = requests.get(url, headers=service._headers(), params=params)
+
+    if r.status_code != 200:
+        raise HTTPException(r.status_code, r.text)
+
+    data = r.json()
+    return data.get("tracks", {}).get("items", [])

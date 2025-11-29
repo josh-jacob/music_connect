@@ -1,0 +1,10 @@
+.name-entry, .description-entry, .public-entry {
+    display: flex;
+    padding: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.name-label, .description-label, .public-label {
+    padding-right: 10px;
+}

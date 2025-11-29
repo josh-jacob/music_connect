@@ -13,10 +13,11 @@ It connects Spotify and YouTube APIs to provide unified search, trends, and play
 
 2.  Project Structure:
 
-    /music_connect  #Project Core  
-    /services       # Individual microservices (search, trends, exports, etc.)  
-    /k8s            # Kubernetes manifests and deployment configs  
-    /docs           # Architecture diagrams, API specs, and setup notes  
+    /music_connect     #Project Core  
+    /services          # Individual microservices (search, trends, exports, etc.)  
+    /music_connect_ui  # User Interface
+    /k8s               # Kubernetes manifests and deployment configs  
+    /docs              # Architecture diagrams, API specs, and setup notes  
 
 3.  Review and update the `.gitignore` file as you add new tools or environments.  
 
@@ -26,3 +27,9 @@ It connects Spotify and YouTube APIs to provide unified search, trends, and play
     - Editor or IDE settings (`.vscode/`, `.idea/`)
     - System-generated files (`.DS_Store`, `Thumbs.db`)
     - Log and temp files (`*.log`, `*.tmp`)
+
+4. Codebase
+   - This project uses:
+     - NoSQL for the Database
+     - Python for the Service
+     - JavaScript for the User Interface (UI)
