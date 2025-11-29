@@ -12,7 +12,6 @@ const SearchResultItem = ({name, artist, album, uri, image}) => {
     const [openAddTrackToPlaylistModal, setOpenAddTrackToPlaylistModal] = useState(false);
 
     const addToPlaylist = async (id) => {
-        console.log(id);
         const track = { uris: [uri] }
         await dispatch(addSpotifyTrackToPlaylist({userId: 'user123', playlistId: id, tracks: track })); //TODO replace with username
         setOpenAddTrackToPlaylistModal(false);
