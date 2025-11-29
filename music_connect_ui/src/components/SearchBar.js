@@ -9,6 +9,7 @@ import {useNavigate} from "react-router";
 const SearchBar = ({service="MusicConnect", q}) => {
     const navigate = useNavigate();
     const [query, setQuery] = useState(q ?? "");
+
     const handleSearch = () => {
         navigate(`/search?q=${query}&sid=${service}`);
     };

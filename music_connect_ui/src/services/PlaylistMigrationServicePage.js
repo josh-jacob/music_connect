@@ -4,10 +4,9 @@ import {useState} from "react";
 import PlaylistDropdown from "../components/PlaylistDropdown";
 import {Avatar, List, ListItem, ListItemAvatar, ListItemText} from "@mui/material";
 import {useSelector} from "react-redux";
-import {selectSpotifyPlaylists} from "../slices/SpotifySlice.ts";
 
 const PlaylistMigrationServicePage = () => {
-    const spotifyPlaylists = useSelector(selectSpotifyPlaylists);
+    const spotifyPlaylists = useSelector(() => null); //TODO
     const youTubeMusicPlaylists = useSelector(() => null); //TODO
     const [playlists, setPlaylists] = useState([]);
     const services = ["Spotify", "YouTube Music"];
