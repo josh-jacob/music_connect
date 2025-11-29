@@ -50,7 +50,6 @@ const LoginPage = ({ type }) => {
         }
 
         setLoading(false);
-        console.log(isAuthenticated);
         if (isAuthenticated) {
             navigate("/");
         }

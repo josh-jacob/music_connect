@@ -169,7 +169,6 @@ export const createSpotifyPlaylist = createAsyncThunk(
     async (props: {userId: string, playlistRequest: CreatePlaylistRequest}) => {
         try {
             const {userId, playlistRequest} = props;
-            console.log(playlistRequest);
             const headers = new Headers();
             headers.set('X-User-Id', userId);
             headers.set('Content-Type', 'application/json');
@@ -202,7 +201,6 @@ export const addSpotifyTrackToPlaylist = createAsyncThunk(
                 headers: headers,
                 body: JSON.stringify(tracks)
             };
-            console.log(tracks);
 
             // Call to add track to existing playlist
             const response = await fetch(`${SPOTIFY_SERVICE_URL}/music/playlist/${playlistId}/add`, requestOptions);
@@ -281,9 +279,9 @@ const SpotifySlice = createSlice({
             .addCase(searchSpotify.fulfilled, (state, action) => {
                 state.loading = false;
                 state.searchResults = [];
-                console.log(action.payload);
+                const results = [];
                 for (let pos in action.payload) {
-                    state.searchResults.push({
+                    results.push({
                         id: action.payload[pos].id,
                         name: action.payload[pos].name,
                         artist: action.payload[pos].artists[0].name,
@@ -292,6 +290,7 @@ const SpotifySlice = createSlice({
                         uri: action.payload[pos].uri
                     });
                 }
+                state.searchResults = results;
             })
             .addCase(searchSpotify.rejected, (state) => {
                 state.loading = false;

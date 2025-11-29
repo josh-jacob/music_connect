@@ -16,7 +16,6 @@ const AddTrackToPlaylistModal = ({open, onClose, onSubmit}) => {
     }, [open])
 
     const onCreate = () => {
-        console.log(playlistId);
         onSubmit(playlistId);
     };
 

@@ -5,7 +5,7 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faSpotify} from "@fortawesome/free-brands-svg-icons";
 import Badge from "@mui/material/Badge";
 import {faPlusCircle, faUserCircle} from "@fortawesome/free-solid-svg-icons";
-import {Button, IconButton, Tooltip} from "@mui/material";
+import {Button, CircularProgress, IconButton, Tooltip} from "@mui/material";
 import {useDispatch, useSelector} from "react-redux";
 import {
     createSpotifyPlaylist,
@@ -22,6 +22,7 @@ const SpotifyServicePage = () => {
     const dispatch = useDispatch();
     const isAuthenticated = useSelector((state) => state.spotify.user.authenticated);
     const playlists = useSelector((state) => state.spotify.playlists);
+    const playlistsLoading = useSelector((state) => state.spotify.loading);
     // TODO: const userName = useSelector() userSlice selectUsername
 
     const [openCreatePlaylistModal, setOpenCreatePlaylistModal] = useState(false);
@@ -82,6 +83,9 @@ const SpotifyServicePage = () => {
                     </Tooltip> : null }
                 </div>
                 <div className={"playlists-container"}>
+                    {playlistsLoading ? <div className={"results-loading-container"}>
+                        <CircularProgress className={"loading-spinner"} sx={{ alignSelf: "center" }}/>
+                    </div> : null}
                     {!isAuthenticated ? <p className="playlist-unauthenticated">Sign into Spotify to see user playlists.</p> : null }
                     {isAuthenticated ? playlists.map((playlist) => (
                         <PlaylistItem playlistName={playlist.name} playlistImage={playlist.image !== "" ? playlist.image : BlankAlbumCover} />
