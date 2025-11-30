@@ -187,4 +187,31 @@ class SpotifyService(MusicServiceInterface):
         )
         return r.json()
 
+    def get_playlist_tracks(self, playlist_id: str):
+        url = f"{API_BASE}/playlists/{playlist_id}/tracks"
+        all_items = []
+        params = {"limit": 100, "offset": 0}
+
+        while True:
+            r = requests.get(url, headers=self._headers(), params=params)
+            if r.status_code != 200:
+                raise HTTPException(r.status_code, r.text)
+
+            data = r.json()
+            all_items.extend(data.get("items", []))
+
+            if data.get("next") is None:
+                break
+            
+            params["offset"] += 100
+
+        return {"total": len(all_items), "items": all_items}
+    
+    def follow_playlist(self, playlist_id: str):
+        r = requests.put(
+            f"{API_BASE}/playlists/{playlist_id}/followers",
+            headers=self._headers()
+        )
+        return {"status": r.status_code, "detail": r.text}
+
 
