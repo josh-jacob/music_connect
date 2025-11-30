@@ -1,23 +1,33 @@
-# Use an official Node runtime as a parent image
-FROM node:16
+# ---------- Build stage ----------
+FROM node:25 AS build
 
-# Set the working directory to /app
+# Create app directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json to the working directory
+# Install dependencies (clean, reproducible)
 COPY package*.json ./
+RUN npm ci
 
-# Install the dependencies
-RUN npm install
+# Copy the rest of the source (src, public, etc.)
+COPY . .
 
-# Copy the remaining application files to the working directory
-COPY src .
-
-# Build the application
+# Build the production bundle
 RUN npm run build
 
-# Expose port 3000 for the application
+# ---------- Run stage ----------
+FROM node:25
+
+WORKDIR /app
+
+# Lightweight static file server
+RUN npm install -g serve
+
+# Copy built static files from build stage
+COPY --from=build /app/build ./build
+
+# Port for the web server (Code Engine can also use this)
+ENV PORT=3000
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "start"]
+# Serve the production build
+CMD ["serve", "-s", "build", "-l", "3000"]
