@@ -1,4 +1,4 @@
-export const CORE_SERVICE_URL = '';
+export const CORE_SERVICE_URL = 'http://127.0.0.1:3001';
 export const SPOTIFY_SERVICE_URL = 'http://127.0.0.1:8081';
 export const YOUTUBE_SERVICE_URL = '';
 export const SEARCH_SERVICE_URL = '';

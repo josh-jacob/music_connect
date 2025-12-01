@@ -1,4 +1,4 @@
-import './Login.css';
+import './LoginPage.css';
 import TextField from '@mui/material/TextField';
 import {useEffect, useState} from "react";
 import {Alert, Button} from "@mui/material";
@@ -77,6 +77,7 @@ const LoginPage = ({ type }) => {
                 </div>
                 <div className={"auth-footer"}>
                     {type === "music-connect" ? <p className={"create-account"}>Don't have an account? <a href={'/create-account'}>Create Account</a></p> : <></>}
+                    {type === "music-connect" ? <p className={"reset-password"}>Forgot Password? <a href={'/reset-password'}>Reset Password</a></p> : <></>}
                     {error ? <Alert severity="error">{errorMessage}</Alert>: ""}
                     {type !== "music-connect" ? <Button className={"stay-unauthenticated"} variant="contained" sx={{ backgroundColor: "black", color: "white", width: "100px" }} onClick={() => {navigate("/youtube-music")}} >Stay Unauthenticated</Button> : null}
                     <Button className={"login-button"} variant="contained" loading={loading} loadingIndicator="Loading…" sx={{ backgroundColor: colour, color: "white", width: "100px" }} onClick={authenticate}>Login</Button>

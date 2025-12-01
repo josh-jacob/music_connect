@@ -1,9 +1,10 @@
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import { AuthProvider } from './services/authentication/AuthContext'
-import  { PrivateRoute } from './services/authentication/PrivateRoute';
 import './App.css';
-import LoginPage from './services/authentication/Login';
-import CreateAccountPage from "./services/authentication/CreateAccount";
+import {BrowserRouter as Router, Route, Routes} from "react-router-dom";
+import {AuthProvider} from './services/authentication/AuthContext'
+import PrivateRoute from './services/authentication/PrivateRoute';
+import LoginPage from './services/authentication/LoginPage';
+import CreateAccountPage from "./services/authentication/CreateAccountPage";
+import ResetPasswordPage from "./services/authentication/ResetPasswordPage";
 import Dashboard from "./services/Dashboard";
 import SpotifyServicePage from "./services/SpotifyServicePage";
 import YouTubeMusicServicePage from "./services/YouTubeMusicServicePage";
@@ -20,6 +21,7 @@ function App() {
                 <Routes>
                     <Route path="/login" element={<LoginPage type="music-connect"/>} />
                     <Route path="/create-account" element={<CreateAccountPage />} />
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/spotify" element={<SpotifyServicePage />} />
                     <Route path="/youtube-music" element={<YouTubeMusicServicePage />} />
@@ -27,11 +29,9 @@ function App() {
                     <Route path="/search" element={<SearchServicePage />} />
                     <Route path="/export" element={<ExportServicePage />} />
                     <Route path="/playlist-migration" element={<PlaylistMigrationPage />} />
-                    {/* authenticated routes
+                    {/* authenticated routes */}
                     <Route element={<PrivateRoute />}>
-                        <Route path="/" element={<Dashboard />} />
                     </Route>
-                     */}
                 </Routes>
             </AuthProvider>
         </Router>

@@ -1,22 +1,12 @@
-import {createAsyncThunk, createSlice} from '@reduxjs/toolkit'
+import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
+import {CORE_SERVICE_URL} from '../config';
 
 interface User {
     name: string,
     username: string,
-    password: string,
-    sessionActive: boolean
-}
-
-interface UserResponse {
-
-}
-
-interface UserRequest {
-
-}
-
-interface CreateUserRequest {
-
+    email: string,
+    token: string
+    sessionActive: boolean,
 }
 
 interface UserSlice {
@@ -29,19 +19,64 @@ const initialState: UserSlice = {
     user: {
         name: "",
         username: "",
-        password: "",
+        email: "",
+        token: "",
         sessionActive: false,
     },
     error: "",
     loading: false,
 };
 
+export const login = createAsyncThunk(
+    "user/login",
+    async (props: {username: string, password: string}) => {
+        try {
+            const {username, password} = props;
+            const headers = new Headers();
+            headers.set('Content-Type', 'application/json');
+
+            const requestBody = {
+                username: username,
+                password: password,
+            };
+
+            const requestOptions = {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(requestBody),
+            };
+
+            const response = await fetch(`${CORE_SERVICE_URL}/api/auth/login`, requestOptions);
+
+            return await response.json();
+        } catch (error) {
+            throw (error.message);
+        }
+    }
+);
+
 export const fetchUser = createAsyncThunk(
     "user/fetchUser",
-    async () => {
+    async (props: {username: string, email: string, password: string, name: string}) => {
         try {
-            // Get user data / authenticate
-            const response = await fetch("");
+            const {username, email, password, name} = props;
+            const headers = new Headers();
+            headers.set('Content-Type', 'application/json');
+
+            const requestBody = {
+                username: username,
+                email: email,
+                password: password,
+                fullName: name,
+            };
+
+            const requestOptions = {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(requestBody),
+            };
+
+            const response = await fetch(`${CORE_SERVICE_URL}`, requestOptions);
 
             return await response.json();
         } catch (error) {
@@ -52,10 +87,110 @@ export const fetchUser = createAsyncThunk(
 
 export const createUserAccount = createAsyncThunk(
     "user/createAccount",
-    async () => {
+    async (props: {username: string, email: string, password: string, fullName: string}) => {
         try {
-            // Get user data / authenticate
-            const response = await fetch("");
+            const {username, email, password, fullName} = props;
+            const headers = new Headers();
+            headers.set('Content-Type', 'application/json');
+
+            const requestBody = {
+                username: username,
+                email: email,
+                password: password,
+                fullName: fullName,
+            };
+
+            const requestOptions = {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(requestBody),
+            };
+
+            const response = await fetch(`${CORE_SERVICE_URL}/api/auth/register`, requestOptions);
+
+            return await response.json();
+        } catch (error) {
+            throw (error.message);
+        }
+    }
+);
+
+export const verifyAccount = createAsyncThunk(
+    "user/verifyAccount",
+    async (token: string) => {
+        try {
+            const headers = new Headers();
+            headers.set('Content-Type', 'application/json');
+
+            const requestBody = {
+                token: token
+            };
+
+            const requestOptions = {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(requestBody),
+            };
+
+            const response = await fetch(`${CORE_SERVICE_URL}/api/auth/verify-email`, requestOptions);
+
+            return await response.json();
+        } catch (error) {
+            throw (error.message);
+        }
+    }
+);
+
+export const resetPassword = createAsyncThunk(
+    "user/resetPassword",
+    async (props: {token: string, password: string}) => {
+        try {
+            const {token, password} = props;
+            const headers = new Headers();
+            headers.set('Content-Type', 'application/json');
+
+            const requestBody = {
+                token: token,
+                newPassword: password
+            };
+
+            const requestOptions = {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(requestBody),
+            };
+
+            const response = await fetch(`${CORE_SERVICE_URL}/api/auth/reset-password`, requestOptions);
+
+            return await response.json();
+        } catch (error) {
+            throw (error.message);
+        }
+    }
+);
+
+
+export const deleteAccount = createAsyncThunk(
+    "user/deleteAccount",
+    async (props: {user: User, password: string}) => {
+        try {
+            const {user, password} = props;
+            const headers = new Headers();
+            headers.set('Content-Type', 'application/json');
+
+            const requestBody = {
+                password: password,
+                confirmation: "DELETE"
+            };
+
+            const requestOptions = {
+                method: 'DELETE',
+                headers: headers,
+                body: JSON.stringify(requestBody),
+                user: user,
+            };
+
+            const response = await fetch(`${CORE_SERVICE_URL}/api/auth/account`, requestOptions);
 
             return await response.json();
         } catch (error) {
@@ -67,9 +202,15 @@ export const createUserAccount = createAsyncThunk(
 export const logout = createAsyncThunk(
     "user/logout",
     async () => {
+        const headers = new Headers();
+        headers.set('Content-Type', 'application/json');
+        const requestOptions = {
+            method: 'POST',
+            headers: headers,
+        };
+
         try {
-            // Get user data / authenticate
-            const response = await fetch("");
+            const response = await fetch(`${CORE_SERVICE_URL}/api/auth/logout`, requestOptions);
 
             return await response.json();
         } catch (error) {
@@ -84,6 +225,24 @@ const UserSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder
+            .addCase(login.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(login.fulfilled, (state, action) => {
+                state.loading = false;
+                state.user = {
+                    username: action.payload.user.username,
+                    email: action.payload.user.email,
+                    name: action.payload.user.fullName,
+                    token: action.payload.token,
+                    sessionActive: true
+                };
+            })
+            .addCase(login.rejected, (state) => {
+                state.loading = false;
+                state.error = "An error occurred";
+            })
             .addCase(fetchUser.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -92,7 +251,7 @@ const UserSlice = createSlice({
                 state.loading = false;
                 state.user = action.payload;
             })
-            .addCase(fetchUser.rejected, (state, action) => {
+            .addCase(fetchUser.rejected, (state) => {
                 state.loading = false;
                 state.error = "An error occurred";
             })
@@ -102,9 +261,50 @@ const UserSlice = createSlice({
             })
             .addCase(createUserAccount.fulfilled, (state, action) => {
                 state.loading = false;
+                state.user = {
+                    username: action.payload.user.username,
+                    email: action.payload.user.email,
+                    name: action.payload.user.fullName,
+                    token: "",
+                    sessionActive: false
+                };
+            })
+            .addCase(createUserAccount.rejected, (state) => {
+                state.loading = false;
+                state.error = "An error occurred";
+            })
+            .addCase(verifyAccount.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(verifyAccount.fulfilled, (state) => {
+                state.loading = false;
+            })
+            .addCase(verifyAccount.rejected, (state) => {
+                state.loading = false;
+                state.error = "An error occurred";
+            })
+            .addCase(resetPassword.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(resetPassword.fulfilled, (state, action) => {
+                state.loading = false;
                 state.user = action.payload;
             })
-            .addCase(createUserAccount.rejected, (state, action) => {
+            .addCase(resetPassword.rejected, (state) => {
+                state.loading = false;
+                state.error = "An error occurred";
+            })
+            .addCase(deleteAccount.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(deleteAccount.fulfilled, (state, action) => {
+                state.loading = false;
+                state.user = action.payload;
+            })
+            .addCase(deleteAccount.rejected, (state) => {
                 state.loading = false;
                 state.error = "An error occurred";
             })
@@ -116,7 +316,7 @@ const UserSlice = createSlice({
                 state.loading = false;
                 state.user = action.payload;
             })
-            .addCase(logout.rejected, (state, action) => {
+            .addCase(logout.rejected, (state) => {
                 state.loading = false;
                 state.error = "An error occurred";
             });

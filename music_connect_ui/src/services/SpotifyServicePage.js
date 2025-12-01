@@ -83,7 +83,7 @@ const SpotifyServicePage = () => {
                     </Tooltip> : null }
                 </div>
                 <div className={"playlists-container"}>
-                    {playlistsLoading ? <div className={"results-loading-container"}>
+                    {isAuthenticated && playlistsLoading ? <div className={"results-loading-container"}>
                         <CircularProgress className={"loading-spinner"} sx={{ alignSelf: "center" }}/>
                     </div> : null}
                     {!isAuthenticated ? <p className="playlist-unauthenticated">Sign into Spotify to see user playlists.</p> : null }

@@ -34,7 +34,7 @@
     width: 45%;
     margin: 5px;
 
-    .create-account {
+    .create-account, .reset-password {
         margin: 10px;
         font-size: 10px;
         text-align: left;

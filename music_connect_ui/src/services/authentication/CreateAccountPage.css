@@ -27,6 +27,13 @@
                 text-align: left;
             }
         }
+        .username-requirements, .password-requirements {
+            width: 50%;
+            font-size: 10px;
+            color: red;
+            text-align: right;
+            margin-top: -10px;
+        }
     }
 }
 

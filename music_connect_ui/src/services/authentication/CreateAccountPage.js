@@ -1,7 +1,7 @@
-import './CreateAccount.css';
+import './CreateAccountPage.css';
 import musicConnectLogo from '../../files/music-connect-logo.png';
 import TextField from '@mui/material/TextField';
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import {Alert, Button} from "@mui/material";
 import {useNavigate} from "react-router";
 
@@ -16,45 +16,51 @@ const CreateAccountPage = () => {
 
     const createAccount = async () => {
         setLoading(true);
-        setError(false);
 
-        if (username.length < 1 || password.length < 5) {
+        if (username.length < 1 || password.length < 8) {
             setError(true);
         }
         else {
-            // call UserSlice to create account.
-        }
+            // TODO call UserSlice to create account.
 
+            if (!error) {
+                setMessage("Account created. Please check your email to verify your account. Redirecting to login.");
+                setTimeout(() => navigate("/login"), 2000);
+            }
+        }
+        setLoading(false);
+    }
+
+    useEffect(() => {
         if (error) {
-            if (username.length < 1 || password.length < 5) {
-                setMessage("Invalid username or password. Your username must be at least 1 character in length. Your password must be at least 5 characters in length.");
+            if (username === "" || password === "") {
+                setMessage("Missing field");
+            }
+            else if (username.length < 1 || password.length < 8) {
+                setMessage("Invalid username or password.");
             }
             else {
                 setMessage("There was a problem creating your account. Please try again.");
             }
         }
-        else {
-            setMessage("Account created. Redirecting to login.");
-            setTimeout(() => navigate("/music-connect/login"), 2000);
-        }
-        setLoading(false);
-    }
+    }, [error]);
 
     return (
         <div>
             <div className="auth-container">
                 <img className={"logo"} src={musicConnectLogo} alt={`MusicConnect Logo`}/>
                 <div className={"auth-wrapper"}>
-                    {/* <FontAwesomeIcon icon={faCoffee} style={{ color: '#6f4e37', marginLeft: '8px' }} /> */}
                     <div className={"username-container"}>
                         <p className={"username-label"}>Enter Username:</p>
                         <TextField hiddenLabel id="username-field" size="small" placeholder={"Username"} sx={{ width: '60%' }} onChange={(e) => setUsername(e.target.value)} />
                     </div>
+                    <p className={"username-requirements"}>Your username must be at least 1 character.</p>
                     <div className={"password-container"}>
                         <p className={"password-label"}>Enter New Password:</p>
                         <div className={"password-label"}></div>
                         <TextField hiddenLabel id="password-field" size="small" type={"password"} placeholder={"Password"} sx={{ width: '60%' }} onChange={(e) => setPassword(e.target.value)} />
                     </div>
+                    <p className={"password-requirements"}>Your password must be at least 8 characters.</p>
                 </div>
                 <div className={"auth-footer"}>
                     {message !== "" ? <Alert severity={error ? "error" : "success"}>{message}</Alert> : null}
