@@ -57,26 +57,24 @@ export const login = createAsyncThunk(
 
 export const fetchUser = createAsyncThunk(
     "user/fetchUser",
-    async (props: {username: string, email: string, password: string, name: string}) => {
+    async (username: string) => {
         try {
-            const {username, email, password, name} = props;
             const headers = new Headers();
             headers.set('Content-Type', 'application/json');
 
             const requestBody = {
-                username: username,
-                email: email,
-                password: password,
-                fullName: name,
+                users: {
+                    username: username
+                },
             };
 
             const requestOptions = {
-                method: 'POST',
+                method: 'GET',
                 headers: headers,
                 body: JSON.stringify(requestBody),
             };
 
-            const response = await fetch(`${CORE_SERVICE_URL}`, requestOptions);
+            const response = await fetch(`${CORE_SERVICE_URL}/api/auth/profile`, requestOptions);
 
             return await response.json();
         } catch (error) {
@@ -141,11 +139,10 @@ export const verifyAccount = createAsyncThunk(
     }
 );
 
-export const resetPassword = createAsyncThunk(
-    "user/resetPassword",
-    async (props: {email: string}) => {
+export const sendResetPasswordEmail = createAsyncThunk(
+    "user/sendResetPasswordEmail",
+    async (email: string) => {
         try {
-            const {email} = props;
             const headers = new Headers();
             headers.set('Content-Type', 'application/json');
 
@@ -168,6 +165,33 @@ export const resetPassword = createAsyncThunk(
     }
 );
 
+export const resetPassword = createAsyncThunk(
+    "user/resetPassword",
+    async (props: {token: string, password: string}) => {
+        try {
+            const {token, password} = props;
+            const headers = new Headers();
+            headers.set('Content-Type', 'application/json');
+
+            const requestBody = {
+                token: token,
+                newPassword: password
+            };
+
+            const requestOptions = {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(requestBody),
+            };
+
+            const response = await fetch(`${CORE_SERVICE_URL}/api/auth/reset-password`, requestOptions);
+
+            return await response.json();
+        } catch (error) {
+            throw (error.message);
+        }
+    }
+);
 
 export const deleteAccount = createAsyncThunk(
     "user/deleteAccount",
@@ -176,6 +200,7 @@ export const deleteAccount = createAsyncThunk(
             const {user, password} = props;
             const headers = new Headers();
             headers.set('Content-Type', 'application/json');
+            headers.set('authorization', `Bearer ${user.token}`);
 
             const requestBody = {
                 password: password,
@@ -185,8 +210,7 @@ export const deleteAccount = createAsyncThunk(
             const requestOptions = {
                 method: 'DELETE',
                 headers: headers,
-                body: JSON.stringify(requestBody),
-                user: user,
+                body: JSON.stringify(requestBody)
             };
 
             const response = await fetch(`${CORE_SERVICE_URL}/api/auth/account`, requestOptions);
@@ -200,9 +224,9 @@ export const deleteAccount = createAsyncThunk(
 
 export const logout = createAsyncThunk(
     "user/logout",
-    async () => {
+    async (token) => {
         const headers = new Headers();
-        headers.set('Content-Type', 'application/json');
+        headers.set('authorization', `Bearer ${token}`);
         const requestOptions = {
             method: 'POST',
             headers: headers,
@@ -230,7 +254,7 @@ const UserSlice = createSlice({
             })
             .addCase(login.fulfilled, (state, action) => {
                 state.loading = false;
-                if(action.payload.user) {
+                if (action.payload.user) {
                     state.user = {
                         username: action.payload.user.username,
                         email: action.payload.user.email,
@@ -311,7 +335,9 @@ const UserSlice = createSlice({
             })
             .addCase(deleteAccount.fulfilled, (state, action) => {
                 state.loading = false;
-                state.user = action.payload;
+                if (action.payload.error) {
+                    state.error = action.payload.error;
+                }
             })
             .addCase(deleteAccount.rejected, (state) => {
                 state.loading = false;
@@ -321,15 +347,17 @@ const UserSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(logout.fulfilled, (state) => {
+            .addCase(logout.fulfilled, (state, action) => {
                 state.loading = false;
-                state.user = {
-                    username: "",
-                    name: "",
-                    email: "",
-                    token: "",
-                    sessionActive: false
-                };
+                if (!action.payload.error) {
+                    state.user = {
+                        username: "",
+                        name: "",
+                        email: "",
+                        token: "",
+                        sessionActive: false
+                    };
+                }
             })
             .addCase(logout.rejected, (state) => {
                 state.loading = false;

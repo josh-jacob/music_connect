@@ -3,8 +3,9 @@ import {Button, Dialog, DialogActions, DialogContent, DialogTitle} from "@mui/ma
 import TextField from "@mui/material/TextField";
 import {useEffect, useState} from "react";
 
-const ConfirmAccountDeletionModal = ({open, onClose, onSubmit}) => {
+const ConfirmAccountDeletionModal = ({open, error, onClose, onSubmit}) => {
     const [password, setPassword ] = useState("");
+
 
     const clearFields = () => {
         setPassword("");
@@ -16,6 +17,7 @@ const ConfirmAccountDeletionModal = ({open, onClose, onSubmit}) => {
 
     const onDelete = () => {
         onSubmit(password);
+        clearFields();
     };
 
     return (
@@ -29,8 +31,9 @@ const ConfirmAccountDeletionModal = ({open, onClose, onSubmit}) => {
                 <p className={"delete-message"}>Are You Sure You Want To Delete Your Account?</p>
                 <div className={"password-entry"}>
                     <p className={"password-label"}>Enter Password:</p>
-                    <TextField value={password} onChange={e => setPassword(e.target.value)} />
+                    <TextField value={password} type={"password"} onChange={e => setPassword(e.target.value)} />
                 </div>
+                {error ? <p className={"error-message"}>There was a problem deleting your account. Re-enter your password and try again.</p>: null}
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose}>Cancel</Button>

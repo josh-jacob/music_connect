@@ -4,24 +4,41 @@ import {Button, ButtonGroup} from "@mui/material";
 import {useDispatch, useSelector} from "react-redux";
 import {deleteAccount, logout} from "../slices/UserSlice.ts";
 import ConfirmAccountDeletionModal from "../modal/ConfirmAccountDeletionModal";
-import {useState} from "react";
+import {useEffect, useState} from "react";
+import {useNavigate} from "react-router";
 
 const Header = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     const [deleteAccountModalOpen, setDeleteAccountModalOpen] = useState(false);
+    const [accountDeleted, setAccountDeleted] = useState(false);
+    const [loggedOut, setLoggedOut] = useState(false);
 
     const user = useSelector((state) => state.users.user);
+    const selectErrorMessage = useSelector((state) => state.users.error);
 
     const handleLogout = async () => {
-        await dispatch(logout());
-    }
+        await dispatch(logout(user.token));
+        setLoggedOut(true);
+    };
 
     const handleAccountDeletion = async (password) => {
-        setDeleteAccountModalOpen(false);
         await dispatch(deleteAccount({user, password}));
-        await handleLogout();
+        await dispatch(logout(user.token));
+        setAccountDeleted(true);
+        setLoggedOut(true);
     }
+
+    useEffect(() => {
+        if (!selectErrorMessage && accountDeleted) {
+            setDeleteAccountModalOpen(false);
+        }
+        if (!user.token && loggedOut) {
+            localStorage.removeItem("accessToken");
+            navigate("/login");
+        }
+    }, [loggedOut, accountDeleted])
 
     return (
         <div className={"header-container"} aria-labelledby="header-container">
@@ -30,7 +47,7 @@ const Header = () => {
                 <Button sx={{ color: "#20B654" }} onClick={() => setDeleteAccountModalOpen(true)}>Delete Account</Button>
                 <Button sx={{ color: "#20B654" }} onClick={handleLogout}>Logout</Button>
             </ButtonGroup>
-            <ConfirmAccountDeletionModal open={deleteAccountModalOpen} onClose={() => setDeleteAccountModalOpen(false)} onSubmit={handleAccountDeletion} />
+            <ConfirmAccountDeletionModal open={deleteAccountModalOpen} error={selectErrorMessage} onClose={() => setDeleteAccountModalOpen(false)} onSubmit={handleAccountDeletion} />
         </div>
     );
 }

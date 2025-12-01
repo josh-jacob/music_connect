@@ -20,25 +20,23 @@ const LoginPage = ({ type }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
-    let isAuthenticated;
 
     const isMusicConnectUserAuthenticated = useSelector((state) => state.users.user.sessionActive);
+    const authToken = useSelector((state) => state.users.user.token);
+    const loginError = useSelector((state) => state.users.error);
 
     useEffect(() => {
         if (type === "youtube-music") {
             setLogo(youTubeMusicLogo);
             setColour("#FF0000");
-            isAuthenticated = isMusicConnectUserAuthenticated;
         } else {
             setLogo(musicConnectLogo);
             setColour("#20B654");
-            isAuthenticated = false; // TODO
         }
-    }, [type, isMusicConnectUserAuthenticated]);
+    }, [type]);
 
     const authenticate = async () => {
         setLoading(true);
-        setError(false);
 
         if (username === "" || (type === "music-connect" && password === "")) {
             setError(true);
@@ -49,18 +47,27 @@ const LoginPage = ({ type }) => {
                 // TODO
             }
             else {
-                dispatch(login({username: username, password: password}));
+                await dispatch(login({username: username, password: password}));
+                setTimeout(() => {}, 1500)
             }
         }
-
         setLoading(false);
-        if (isAuthenticated) {
-            navigate("/");
+    }
+
+    useEffect(() => {
+        if (type === "youtube-music") {
+            // TODO
         }
         else {
-            setError(true);
+            if (!loading && isMusicConnectUserAuthenticated) {
+                localStorage.setItem("accessToken", authToken);
+                navigate("/");
+            }
+            else if (!loading) {
+                setError(true);
+            }
         }
-    }
+    }, [loading, isMusicConnectUserAuthenticated]);
 
     useEffect(() => {
         if (error) {
@@ -68,10 +75,10 @@ const LoginPage = ({ type }) => {
                 setErrorMessage("Username and password fields are required.");
             }
             else {
-                setErrorMessage("There was a problem logging you in. Please check your credentials and try again.");
+                setErrorMessage(loginError);
             }
         }
-    }, [error])
+    }, [loginError, error])
 
     useEffect(() => {
         setError(false);
