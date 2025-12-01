@@ -165,6 +165,28 @@ export const fetchSpotifyPlaylists = createAsyncThunk(
     }
 );
 
+export const fetchSpotifyPlaylistTracks = createAsyncThunk(
+    "spotify/fetchPlaylistTracks",
+    async (props: {userId: string, playlistId: string}) => {
+        try {
+            const {userId, playlistId} = props;
+            const headers = new Headers();
+            headers.set('X-User-Id', userId);
+            const requestOptions = {
+                method: 'GET',
+                headers: headers
+            };
+
+            // Call to fetch user playlists
+            const response = await fetch(`${SPOTIFY_SERVICE_URL}/music/playlist/${playlistId}/tracks`, requestOptions);
+            const result = await response.json();
+            return {playlistId, result};
+        } catch (error) {
+            throw (error.message);
+        }
+    }
+);
+
 export const createSpotifyPlaylist = createAsyncThunk(
     "spotify/createPlaylist",
     async (props: {userId: string, playlistRequest: CreatePlaylistRequest}) => {
@@ -304,7 +326,6 @@ const SpotifySlice = createSlice({
             })
             .addCase(getSavedSpotifyTracks.fulfilled, (state) => {
                 state.loading = false;
-                // TODO Add track to playlist object
             })
             .addCase(getSavedSpotifyTracks.rejected, (state) => {
                 state.loading = false;
@@ -317,7 +338,6 @@ const SpotifySlice = createSlice({
             .addCase(fetchSpotifyPlaylists.fulfilled, (state, action) => {
                 state.loading = false;
                 state.playlists = [];
-                console.log(action.payload);
                 for (let i in action.payload.items) {
                     state.playlists.push({
                         id: action.payload.items[i].id,
@@ -328,6 +348,31 @@ const SpotifySlice = createSlice({
                 }
             })
             .addCase(fetchSpotifyPlaylists.rejected, (state) => {
+                state.loading = false;
+                state.error = "An error occurred";
+            })
+            .addCase(fetchSpotifyPlaylistTracks.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchSpotifyPlaylistTracks.fulfilled, (state, action) => {
+                state.loading = false;
+                // Find playlist and add tracks
+                const playlists = state.playlists;
+                for (let pos in playlists) {
+                    if (playlists[pos].id === action.payload.playlistId) {
+                        playlists[pos].tracks = action.payload.result.items.map((track) => ({
+                            id: track.track.id,
+                            name: track.track.name,
+                            artist: track.track.artists[0].name,
+                            album: track.track.album.name,
+                            albumCover: track.track.album.images[0].url,
+                            uri: track.track.uri,
+                        }));
+                    }
+                }
+            })
+            .addCase(fetchSpotifyPlaylistTracks.rejected, (state) => {
                 state.loading = false;
                 state.error = "An error occurred";
             })

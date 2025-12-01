@@ -1,0 +1,21 @@
+.playlist-header-container {
+    display: flex;
+    justify-content: left;
+    width: 100%;
+    height: fit-content;
+    padding: 5px;
+    border-bottom: lightgrey solid 1px;
+
+    img {
+        width: 250px;
+        height: 250px;
+    }
+
+    .playlist-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding-left: 50px
+    }
+}
