@@ -50,3 +50,33 @@ def search(q: str = Query(...), user_id: str = Depends(get_user_id)):
 
     data = r.json()
     return data.get("tracks", {}).get("items", [])
+
+@router.get("/search")
+def search(q: str = Query(...), user_id: str = Depends(get_user_id)):
+    service = SpotifyService(user_id=user_id)
+
+    url = "https://api.spotify.com/v1/search"
+    params = {"q": q, "type": "track", "limit": 10}
+
+    r = requests.get(url, headers=service._headers(), params=params)
+
+    if r.status_code != 200:
+        raise HTTPException(r.status_code, r.text)
+
+    data = r.json()
+    return data.get("tracks", {}).get("items", [])
+
+@router.get("/playlist/{playlist_id}/tracks")
+def get_playlist_tracks(
+    playlist_id: str,
+    user_id: str = Depends(get_user_id)
+):
+    """
+    Returns all tracks for a given Spotify playlist.
+    """
+    service = SpotifyService(user_id)
+    return service.get_playlist_tracks(playlist_id)
+
+@router.put("/playlist/{playlist_id}/follow")
+def follow_playlist(playlist_id: str, user_id: str = Depends(get_user_id)):
+    return SpotifyService(user_id).follow_playlist(playlist_id)
