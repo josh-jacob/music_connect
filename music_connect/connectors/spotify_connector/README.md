@@ -50,7 +50,8 @@ Tokens are stored in an in-memory `token_manager`.
 
 ### **Clone & enter folder**
 
-`git clone https://github.com/josh-jacob/music_connect.git cd music_connect/music_connect/connectors/spotify_connector` 
+`git clone https://github.com/josh-jacob/music_connect.git
+cd music_connect/music_connect/connectors/spotify_connector` 
 
 ----------
 
