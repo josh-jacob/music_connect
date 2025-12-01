@@ -1,5 +1,5 @@
 
-# 📄 **README — Spotify Connector Microservice**
+# **README — Spotify Connector Microservice**
 
 ## Overview
 
