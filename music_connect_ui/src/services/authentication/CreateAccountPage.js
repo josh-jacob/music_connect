@@ -91,7 +91,10 @@ const CreateAccountPage = () => {
                 </div>
                 <div className={"auth-footer"}>
                     {message !== "" ? <Alert severity={error ? "error" : "success"}>{message}</Alert> : null}
-                    <Button className={"create-account-button"} variant="contained" loading={loading} loadingIndicator="Loading…" sx={{ backgroundColor: "#20B654", color: "white", width: "100px" }} onClick={createAccount}>Create</Button>
+                    <div className={"action-buttons"}>
+                        <Button className={"back-button"} variant="contained" sx={{ backgroundColor: "#20B654", color: "white" }} onClick={() => navigate('/login')}>Back to Login</Button>
+                        <Button className={"create-account-button"} variant="contained" loading={loading} loadingIndicator="Loading…" sx={{ backgroundColor: "#20B654", color: "white" }} onClick={createAccount}>Create</Button>
+                    </div>
                 </div>
             </div>
         </div>

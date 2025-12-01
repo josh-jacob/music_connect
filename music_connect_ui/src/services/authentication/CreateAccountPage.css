@@ -41,7 +41,13 @@
     width: 45%;
     margin: 5px;
 
+    .back-button {
+        float: left;
+        width: fit-content;
+    }
+
     .create-account-button {
         float: right;
+        width: fit-content;
     }
 }

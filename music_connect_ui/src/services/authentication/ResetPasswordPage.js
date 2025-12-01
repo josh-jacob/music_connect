@@ -58,7 +58,10 @@ const ResetPasswordPage = () => {
                 </div>
                 <div className={"auth-footer"}>
                     {message !== "" ? <Alert severity={error ? "error" : "success"}>{message}</Alert> : null}
-                    <Button className={"reset-password-button"} variant="contained" loading={loading} loadingIndicator="Loading…" sx={{ backgroundColor: "#20B654", color: "white", width: "100px" }} onClick={forgotPassword}>Send Password Reset</Button>
+                    <div className={"action-buttons"}>
+                        <Button className={"back-button"} variant="contained" sx={{ backgroundColor: "#20B654", color: "white", width: "150px" }} onClick={() => navigate('/login')}>Back to Login</Button>
+                        <Button className={"reset-password-button"} variant="contained" loading={loading} loadingIndicator="Loading…" sx={{ backgroundColor: "#20B654", color: "white", width: "100px" }} onClick={forgotPassword}>Send Password Reset</Button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -24,14 +24,14 @@ function App() {
                     <Route path="/create-account" element={<CreateAccountPage />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
                     <Route path="/" element={<Dashboard />} />
-                    <Route path="/spotify" element={<SpotifyServicePage />} />
-                    <Route path="/youtube-music" element={<YouTubeMusicServicePage />} />
-                    <Route path="/youtube-music/login" element={<LoginPage type="youtube-music"/>} />
-                    <Route path="/:service/playlist/:playlistId" element={<PlaylistPage />} />
-                    <Route path="/search" element={<SearchServicePage />} />
-                    <Route path="/playlist-migration" element={<PlaylistMigrationPage />} />
                     {/* authenticated routes */}
                     <Route element={<PrivateRoute />}>
+                        <Route path="/spotify" element={<SpotifyServicePage />} />
+                        <Route path="/youtube-music" element={<YouTubeMusicServicePage />} />
+                        <Route path="/youtube-music/login" element={<LoginPage type="youtube-music"/>} />
+                        <Route path="/:service/playlist/:playlistId" element={<PlaylistPage />} />
+                        <Route path="/search" element={<SearchServicePage />} />
+                        <Route path="/playlist-migration" element={<PlaylistMigrationPage />} />
                         <Route path="/export" element={<ExportServicePage />} />
                     </Route>
                 </Routes>

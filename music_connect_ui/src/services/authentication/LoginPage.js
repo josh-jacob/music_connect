@@ -40,9 +40,8 @@ const LoginPage = ({ type }) => {
         setLoading(true);
         setError(false);
 
-        if (username.length === 0 || (type === "music-connect" && password.length === 0)) {
+        if (username === "" || (type === "music-connect" && password === "")) {
             setError(true);
-            setErrorMessage("Username and password fields are required.");
         }
         else {
             // call Slice to authenticate and get user data.
@@ -60,9 +59,24 @@ const LoginPage = ({ type }) => {
         }
         else {
             setError(true);
-            setErrorMessage("There was a problem logging you in. Please check your credentials and try again.");
         }
     }
+
+    useEffect(() => {
+        if (error) {
+            if (username === "" || (type === "music-connect" && password === "")) {
+                setErrorMessage("Username and password fields are required.");
+            }
+            else {
+                setErrorMessage("There was a problem logging you in. Please check your credentials and try again.");
+            }
+        }
+    }, [error])
+
+    useEffect(() => {
+        setError(false);
+        setErrorMessage("");
+    }, [username, password]);
 
     return (
         <div>
