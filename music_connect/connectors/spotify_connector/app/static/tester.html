@@ -20,7 +20,7 @@
         async function apiRequest(endpoint) {
             const userId = document.getElementById("userId").value;
 
-            const res = await fetch(`http://localhost:8081${endpoint}`, {
+            const res = await fetch(`http://192.168.2.11:8081${endpoint}`, {
                 method: "GET",
                 headers: {
                     "X-User-Id": userId
