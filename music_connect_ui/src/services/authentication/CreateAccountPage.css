@@ -15,14 +15,14 @@
         display: grid;
         place-items: center;
 
-        .username-container, .password-container {
+        .email-container, .name-container, .username-container, .password-container {
             width: 50%;
             display: flex;
             align-content: center;
             justify-content: space-between;
             margin: 10px;
 
-            .username-label, .password-label {
+            .email-label, .name-label, .username-label, .password-label {
                 margin: 10px;
                 text-align: left;
             }

@@ -6,9 +6,12 @@ import {useNavigate} from "react-router";
 import musicConnectLogo from '../../files/music-connect-logo.png';
 import youTubeMusicLogo from '../../files/youtube-music-logo.png';
 import Header from '../../components/Header';
+import {login} from "../../slices/UserSlice.ts";
+import {useDispatch, useSelector} from "react-redux";
 
 const LoginPage = ({ type }) => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const [logo, setLogo] = useState(musicConnectLogo);
     const [username, setUsername] = useState("");
@@ -19,17 +22,19 @@ const LoginPage = ({ type }) => {
     const [errorMessage, setErrorMessage] = useState("");
     let isAuthenticated;
 
+    const isMusicConnectUserAuthenticated = useSelector((state) => state.users.user.sessionActive);
+
     useEffect(() => {
         if (type === "youtube-music") {
             setLogo(youTubeMusicLogo);
             setColour("#FF0000");
-            isAuthenticated = false; // TODO
+            isAuthenticated = isMusicConnectUserAuthenticated;
         } else {
             setLogo(musicConnectLogo);
             setColour("#20B654");
             isAuthenticated = false; // TODO
         }
-    }, [type]);
+    }, [type, isMusicConnectUserAuthenticated]);
 
     const authenticate = async () => {
         setLoading(true);
@@ -45,7 +50,7 @@ const LoginPage = ({ type }) => {
                 // TODO
             }
             else {
-                // TODO
+                dispatch(login({username: username, password: password}));
             }
         }
 

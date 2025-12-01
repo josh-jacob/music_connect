@@ -29,10 +29,10 @@ function App() {
                     <Route path="/youtube-music/login" element={<LoginPage type="youtube-music"/>} />
                     <Route path="/:service/playlist/:playlistId" element={<PlaylistPage />} />
                     <Route path="/search" element={<SearchServicePage />} />
-                    <Route path="/export" element={<ExportServicePage />} />
                     <Route path="/playlist-migration" element={<PlaylistMigrationPage />} />
                     {/* authenticated routes */}
                     <Route element={<PrivateRoute />}>
+                        <Route path="/export" element={<ExportServicePage />} />
                     </Route>
                 </Routes>
             </AuthProvider>

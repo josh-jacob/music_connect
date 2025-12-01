@@ -143,15 +143,14 @@ export const verifyAccount = createAsyncThunk(
 
 export const resetPassword = createAsyncThunk(
     "user/resetPassword",
-    async (props: {token: string, password: string}) => {
+    async (props: {email: string}) => {
         try {
-            const {token, password} = props;
+            const {email} = props;
             const headers = new Headers();
             headers.set('Content-Type', 'application/json');
 
             const requestBody = {
-                token: token,
-                newPassword: password
+                email: email,
             };
 
             const requestOptions = {
@@ -160,7 +159,7 @@ export const resetPassword = createAsyncThunk(
                 body: JSON.stringify(requestBody),
             };
 
-            const response = await fetch(`${CORE_SERVICE_URL}/api/auth/reset-password`, requestOptions);
+            const response = await fetch(`${CORE_SERVICE_URL}/api/auth/forgot-password`, requestOptions);
 
             return await response.json();
         } catch (error) {
@@ -231,13 +230,18 @@ const UserSlice = createSlice({
             })
             .addCase(login.fulfilled, (state, action) => {
                 state.loading = false;
-                state.user = {
-                    username: action.payload.user.username,
-                    email: action.payload.user.email,
-                    name: action.payload.user.fullName,
-                    token: action.payload.token,
-                    sessionActive: true
-                };
+                if(action.payload.user) {
+                    state.user = {
+                        username: action.payload.user.username,
+                        email: action.payload.user.email,
+                        name: action.payload.user.fullName,
+                        token: action.payload.token,
+                        sessionActive: true
+                    };
+                }
+                else {
+                    state.error = action.payload.error;
+                }
             })
             .addCase(login.rejected, (state) => {
                 state.loading = false;
@@ -261,13 +265,18 @@ const UserSlice = createSlice({
             })
             .addCase(createUserAccount.fulfilled, (state, action) => {
                 state.loading = false;
-                state.user = {
-                    username: action.payload.user.username,
-                    email: action.payload.user.email,
-                    name: action.payload.user.fullName,
-                    token: "",
-                    sessionActive: false
-                };
+                if (action.payload.user) {
+                    state.user = {
+                        username: action.payload.user.username,
+                        email: action.payload.user.email,
+                        name: action.payload.user.fullName,
+                        token: "",
+                        sessionActive: false
+                    };
+                }
+                else {
+                    state.error = action.payload.error;
+                }
             })
             .addCase(createUserAccount.rejected, (state) => {
                 state.loading = false;
@@ -312,9 +321,15 @@ const UserSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(logout.fulfilled, (state, action) => {
+            .addCase(logout.fulfilled, (state) => {
                 state.loading = false;
-                state.user = action.payload;
+                state.user = {
+                    username: "",
+                    name: "",
+                    email: "",
+                    token: "",
+                    sessionActive: false
+                };
             })
             .addCase(logout.rejected, (state) => {
                 state.loading = false;
