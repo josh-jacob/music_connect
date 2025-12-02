@@ -22,15 +22,20 @@ class Settings(BaseSettings):
     BASE_URL: str = "http://localhost:8081"
 
     # --- Storage Backend ---
-    STORAGE_BACKEND: str = "memory"   # memory or redis
+    STORAGE_BACKEND: str = "memory"   # memory or database
 
-    # --- CORS ---
+    # --- Postgres Settings ---
+    MC_PG_HOST: str | None = None
+    MC_PG_PORT: int | None = None
+    MC_PG_DB: str | None = None
+    MC_PG_USER: str | None = None
+    MC_PG_PASSWORD: str | None = None
+    MC_PG_SSLMODE: str | None = None
+
+    # --- ⭐ REQUIRED BY main.py ---
     CORS_ALLOWED_ORIGINS: List[str] = ["*"]
     CORS_ALLOWED_METHODS: List[str] = ["*"]
     CORS_ALLOWED_HEADERS: List[str] = ["*"]
-
-    # --- Logging ---
-    LOG_LEVEL: str = "INFO"
 
     class Config:
         env_file = ".env"
