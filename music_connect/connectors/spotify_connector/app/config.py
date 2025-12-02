@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Optional
 
 
 class Settings(BaseSettings):
@@ -18,24 +18,16 @@ class Settings(BaseSettings):
         "user-library-modify"
     )
 
-    # --- Service Basics ---
-    BASE_URL: str = "http://localhost:8081"
-
     # --- Storage Backend ---
-    STORAGE_BACKEND: str = "memory"   # memory or database
+    STORAGE_BACKEND: str = "memory"  # memory | postgres
 
-    # --- Postgres Settings ---
-    MC_PG_HOST: str | None = None
-    MC_PG_PORT: int | None = None
-    MC_PG_DB: str | None = None
-    MC_PG_USER: str | None = None
-    MC_PG_PASSWORD: str | None = None
-    MC_PG_SSLMODE: str | None = None
-
-    # --- ⭐ REQUIRED BY main.py ---
-    CORS_ALLOWED_ORIGINS: List[str] = ["*"]
-    CORS_ALLOWED_METHODS: List[str] = ["*"]
-    CORS_ALLOWED_HEADERS: List[str] = ["*"]
+    # --- Postgres ---
+    MC_PG_HOST: Optional[str] = None
+    MC_PG_PORT: Optional[int] = None
+    MC_PG_DB: Optional[str] = None
+    MC_PG_USER: Optional[str] = None
+    MC_PG_PASSWORD: Optional[str] = None
+    MC_PG_SSLMODE: Optional[str] = None
 
     class Config:
         env_file = ".env"

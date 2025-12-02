@@ -6,7 +6,7 @@ import requests
 from fastapi import HTTPException
 
 from app.config import settings
-from app.storage import token_manager
+from app.storage.token_manager import token_manager
 from app.interfaces.music_service_interface import MusicServiceInterface
 from app.utils.logger import get_logger
 
