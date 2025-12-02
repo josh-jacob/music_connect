@@ -6,13 +6,16 @@
 docker-compose.yml
 Dockerfile.ibmcloud
 
-# Environment files
+# Environment files and certificates
 .env
 .env.*
+certs/*.pem
 
 # Logs and temp files
 *.log
 *.tmp
+docs/connecting_ibmPostgres.txt
+
 
 # Python cache
 __pycache__/
