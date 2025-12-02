@@ -7,7 +7,7 @@ import time
 
 from app.dependencies import get_user_id
 from app.services.spotify_service import SpotifyService
-from app.storage import token_manager
+from app.storage.token_manager import token_manager
 from app.config import settings
 
 AUTH_URL = "https://accounts.spotify.com/authorize"
