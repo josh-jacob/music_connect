@@ -4,11 +4,26 @@ load_dotenv()
 from fastapi.responses import RedirectResponse
 from oauth_handler import get_flow, get_authenticated_service
 from token_storage import save_tokens
+from pydantic import BaseModel
 
 
 import os
 
 app = FastAPI()
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+# Allow everything (development mode)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],          # Allow all domains
+    allow_credentials=True,
+    allow_methods=["*"],          # Allow all HTTP methods
+    allow_headers=["*"],          # Allow all headers
+)
+
 """
 Redirect user to Google's OAuth page.
 Requests offline access so we get a refresh token.
@@ -41,7 +56,6 @@ def youtube_callback(request: Request):
         "expires_at": credentials.expiry.isoformat(),
         "scopes": credentials.scopes
     }
-
     save_tokens(token_data)
 
     return {"message": "YouTube connected and tokens saved!"}
@@ -74,11 +88,16 @@ def get_playlist_items(playlist_id: str):
         ).execute()
 
         for item in response["items"]:
+            snippet = item["snippet"]
+
             items.append({
-                "title": item["snippet"]["title"],
+                "title": snippet["title"],
                 "videoId": item["contentDetails"]["videoId"],
-                "thumbnail": item["snippet"]["thumbnails"]["default"]["url"]
+                "thumbnail": snippet["thumbnails"]["default"]["url"],
+                "channel": snippet.get("videoOwnerChannelTitle")  # preferred field
+                            or snippet.get("channelTitle")        # fallback for older videos
             })
+
 
         next_page_token = response.get("nextPageToken")
         if not next_page_token:
@@ -223,4 +242,76 @@ def remove_track_from_playlist(playlist_id: str, videoId: str):
         "playlistItemId": playlist_item_id,
         "videoId": videoId
     }
+
+    from pydantic import BaseModel
+
+class CreatePlaylistRequest(BaseModel):
+    title: str
+    description: str | None = ""
+    privacy: str | None = "public"   # allowed: public, private, unlisted
+
+
+@app.post("/youtube/playlists/create")
+def create_playlist(body: CreatePlaylistRequest):
+    credentials = refresh_youtube_token()
+    if credentials is None:
+        return {"error": "Please login first using /auth/youtube/login"}
+
+    youtube = get_authenticated_service(credentials)
+
+    playlist_body = {
+        "snippet": {
+            "title": body.title,
+            "description": body.description
+        },
+        "status": {
+            "privacyStatus": body.privacy
+        }
+    }
+
+    response = youtube.playlists().insert(
+        part="snippet,status",
+        body=playlist_body
+    ).execute()
+
+    return {
+        "status": "created",
+        "playlistId": response["id"],
+        "title": body.title
+    }
+
+@app.get("/youtube/me")
+def get_user_info():
+    """
+    Returns information about the authenticated YouTube user:
+    name, channel ID, profile picture, etc.
+    """
+    credentials = refresh_youtube_token()
+    if credentials is None:
+        return {"error": "Please login first using /auth/youtube/login"}
+
+    youtube = get_authenticated_service(credentials)
+
+    response = youtube.channels().list(
+        part="snippet,contentDetails,statistics",
+        mine=True
+    ).execute()
+
+    if not response["items"]:
+        return {"error": "No YouTube channel found for this user"}
+
+    data = response["items"][0]
+
+    return {
+        "channelId": data["id"],
+        "title": data["snippet"]["title"],
+        "description": data["snippet"].get("description"),
+        "profileImage": data["snippet"]["thumbnails"]["default"]["url"],
+        "country": data["snippet"].get("country"),
+        "viewCount": data["statistics"].get("viewCount"),
+        "subscriberCount": data["statistics"].get("subscriberCount"),
+        "videoCount": data["statistics"].get("videoCount"),
+        "uploadsPlaylistId": data["contentDetails"]["relatedPlaylists"]["uploads"]
+    }
+
 
