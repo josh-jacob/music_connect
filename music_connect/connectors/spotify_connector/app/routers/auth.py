@@ -18,7 +18,10 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.get("/login")
 async def login(user_id: str = Depends(get_user_id)):
-    """Step 1: UI calls this → returns Spotify login URL."""
+    """
+    Step 1:
+    UI requests → get Spotify login URL + state token.
+    """
     return SpotifyService.build_auth_url(user_id)
 
 
@@ -28,6 +31,10 @@ def callback(
     state: Optional[str] = Query(default=None),
     error: Optional[str] = Query(default=None),
 ):
+    """
+    Step 2:
+    Spotify redirects here → exchange code for tokens.
+    """
 
     if error:
         raise HTTPException(status_code=400, detail=f"OAuth error: {error}")
@@ -35,12 +42,12 @@ def callback(
     if not code or not state:
         raise HTTPException(status_code=400, detail="Missing 'code' or 'state'.")
 
-    # Resolve the user from the stored state
+    # Resolve correct user_id from state
     user_id = token_manager.pop_state(state)
     if not user_id:
         raise HTTPException(status_code=400, detail="Invalid state — no matching user.")
 
-    # Build basic auth for Spotify token exchange
+    # Build Basic Auth header
     client_creds = f"{settings.SPOTIFY_CLIENT_ID}:{settings.SPOTIFY_CLIENT_SECRET}"
     b64_creds = base64.b64encode(client_creds.encode()).decode()
 
@@ -55,22 +62,22 @@ def callback(
         "redirect_uri": settings.SPOTIFY_REDIRECT_URI,
     }
 
-    # Request tokens
+    # Exchange authorization code for tokens
     resp = requests.post(TOKEN_URL, data=data, headers=headers)
     if resp.status_code != 200:
         raise HTTPException(resp.status_code, "Failed to exchange code for token.")
 
     token_payload = resp.json()
 
-
+    # Compute expiry
     expires_at = int(time.time()) + token_payload["expires_in"]
 
-    # Store properly
+    # Store tokens in your internal token manager
     token_manager.store_tokens(user_id, {
         "access_token": token_payload["access_token"],
         "refresh_token": token_payload.get("refresh_token"),
         "expires_at": expires_at,
     })
 
-    # Redirect to UI
+    # Redirect user to UI (same behavior as before)
     return RedirectResponse("http://localhost:3000/spotify")
