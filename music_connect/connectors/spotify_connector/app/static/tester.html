@@ -20,7 +20,7 @@
         async function apiRequest(endpoint) {
             const userId = document.getElementById("userId").value;
 
-            const res = await fetch(`http://192.168.2.11:8081${endpoint}`, {
+            const res = await fetch(`https://musiconnect-spotify-connector.23a7gw1hifo3.ca-tor.codeengine.appdomain.cloud${endpoint}`, {
                 method: "GET",
                 headers: {
                     "X-User-Id": userId

@@ -1,6 +1,15 @@
+# Step 0 — Retrieve BASE_URL from environment variables
+$baseUrl = $env:BASE_URL
+
+if (-not $baseUrl) {
+    Write-Host "Error: BASE_URL environment variable is not set."
+    exit 1
+}
+Write-Host "Using BASE_URL: $baseUrl"
+
 # Step 1 — Call /auth/login with the user-id header
 $response = Invoke-WebRequest `
-    -Uri "http://localhost:8081/auth/login" `
+    -Uri "$baseUrl/auth/login" `
     -Headers @{ "X-User-Id" = "testuser123" }
 
 Write-Host "Raw response:"
