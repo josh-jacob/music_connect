@@ -1,7 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import List, Optional
 
-
 class Settings(BaseSettings):
     # --- Spotify Credentials ---
     SPOTIFY_CLIENT_ID: str
@@ -19,15 +18,20 @@ class Settings(BaseSettings):
     )
 
     # --- Storage Backend ---
-    STORAGE_BACKEND: str = "memory"  # memory | postgres
+    STORAGE_BACKEND: str = "memory"
 
-    # --- Postgres ---
+    # --- Postgres Settings ---
     MC_PG_HOST: Optional[str] = None
     MC_PG_PORT: Optional[int] = None
     MC_PG_DB: Optional[str] = None
     MC_PG_USER: Optional[str] = None
     MC_PG_PASSWORD: Optional[str] = None
     MC_PG_SSLMODE: Optional[str] = None
+
+    # --- CORS Settings (FIX) ---
+    CORS_ALLOWED_ORIGINS: List[str] = ["*"]
+    CORS_ALLOWED_METHODS: List[str] = ["*"]
+    CORS_ALLOWED_HEADERS: List[str] = ["*"]
 
     class Config:
         env_file = ".env"
