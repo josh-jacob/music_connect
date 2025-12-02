@@ -73,4 +73,5 @@ def callback(
     })
 
     # Redirect to UI
-    return RedirectResponse("http://localhost:3000/spotify")
+    return RedirectResponse(settings.UI_BASE_URL + "/spotify")
+

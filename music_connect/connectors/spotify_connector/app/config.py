@@ -20,6 +20,7 @@ class Settings(BaseSettings):
 
     # --- Service Basics ---
     BASE_URL: str = "http://localhost:8081"
+    UI_BASE_URL: str = "http://localhost:3000"
 
     # --- Storage Backend ---
     STORAGE_BACKEND: str = "memory"   # memory or redis
