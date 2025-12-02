@@ -2,25 +2,28 @@ import requests
 from app.config import settings
 
 class SpotifyClient:
-
     @staticmethod
     def search(query: str, user_id: str):
-        url = f"{settings.spotify_connector_url}/music/search"
+        url = f"{settings.spotify_base_url}/music/search"
         headers = {"X-User-Id": user_id}
         params = {"q": query}
 
-        resp = requests.get(url, headers=headers, params=params)
-        resp.raise_for_status()
+        try:
+            resp = requests.get(url, headers=headers, params=params)
+            resp.raise_for_status()
+            raw = resp.json()
+        except Exception as e:
+            return []
 
-        data = resp.json()
+        # NORMALIZE RESULTS
+        results = []
+        for item in raw.get("tracks", []):
+            results.append({
+                "source": "spotify",
+                "title": item["name"],
+                "artist": item["artists"][0]["name"] if item["artists"] else None,
+                "trackId": item["id"],
+                "thumbnail": item.get("album", {}).get("images", [{}])[0].get("url"),
+            })
 
-        # CASE 1: Spotify connector returns {"items": [...]}
-        if isinstance(data, dict) and "items" in data:
-            return data["items"]
-
-        # CASE 2: Spotify connector returns a bare list [...]
-        if isinstance(data, list):
-            return data
-
-        # CASE 3: Unexpected format
-        return []
+        return results

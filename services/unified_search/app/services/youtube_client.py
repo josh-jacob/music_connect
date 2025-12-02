@@ -3,15 +3,25 @@ from app.config import settings
 
 class YouTubeClient:
     @staticmethod
-    def search(query: str, user_id: str):
-        url = f"{settings.YOUTUBE_BASE_URL}/youtube/search"
-        resp = requests.get(
-            url,
-            params={"q": query},
-            headers={"X-User-Id": user_id}
-        )
+    def search(query: str):
+        url = f"{settings.youtube_base_url}/youtube/search"
+        params = {"q": query}
 
-        if resp.status_code != 200:
+        try:
+            resp = requests.get(url, params=params)
+            resp.raise_for_status()
+            raw = resp.json()
+        except Exception:
             return []
 
-        return resp.json().get("items", [])
+        results = []
+        for item in raw.get("results", []):
+            results.append({
+                "source": "youtube",
+                "title": item["title"],
+                "artist": item["channel"],
+                "trackId": item["videoId"],
+                "thumbnail": item["thumbnail"],
+            })
+
+        return results

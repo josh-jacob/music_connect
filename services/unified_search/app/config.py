@@ -1,12 +1,14 @@
 from pydantic_settings import BaseSettings
+from pydantic import Field
 
 class Settings(BaseSettings):
-    SPOTIFY_CONNECTOR_URL: str = "http://localhost:8081"
-    YOUTUBE_CONNECTOR_URL: str = "http://localhost:8082"
+    # These read from .env automatically (SPOTIFY_CONNECTOR_URL=...)
+    spotify_base_url: str = Field("http://localhost:8081", alias="SPOTIFY_CONNECTOR_URL")
+    youtube_base_url: str = Field("http://localhost:8082", alias="YOUTUBE_CONNECTOR_URL")
+    
     LOG_LEVEL: str = "INFO"
 
     class Config:
-        # Path is relative to where you run `uvicorn` (unified_search/)
         env_file = ".env"
 
 
