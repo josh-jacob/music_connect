@@ -7,6 +7,7 @@ import {useEffect, useState} from "react";
 import {searchSpotify} from "../slices/SpotifySlice.ts";
 import {useDispatch, useSelector} from "react-redux";
 import SearchResult from "../components/SearchResult";
+import {search} from "../slices/SearchSlice.ts";
 
 const SearchServicePage = () => {
     const navigate = useNavigate();
@@ -17,6 +18,7 @@ const SearchServicePage = () => {
     const [searchResultsLoading, setSearchResultsLoading] = useState(true);
 
     const spotifySearchResults = useSelector((state) => state.spotify.searchResults);
+    const musicConnectSearchResults = useSelector((state) => state.search.searchResults);
     const spotifySearchResultsLoading = useSelector((state) => state.spotify.loading);
 
     const serviceId = searchParams.get("sid");
@@ -42,25 +44,35 @@ const SearchServicePage = () => {
 
     useEffect(() => {
         clearSearchResults();
-        if (serviceId === "MusicConnect"){
-            //TODO
-        }
-        else if (serviceId === "Spotify") {
+        if (serviceId === "Spotify") {
             setSearchResults(spotifySearchResults);
             setSearchResultsLoading(spotifySearchResultsLoading);
             setResultCount(spotifySearchResults.length);
         }
-        else { //YouTube Music
+        else if (serviceId === "YouTube") { //YouTube Music
             //TODO
         }
-    }, [searchQuery, spotifySearchResults]);
+        else {
+            setSearchResults(musicConnectSearchResults);
+            // setResultCount(musicConnectSearchResults.length);
+        }
+    }, [searchQuery, spotifySearchResults, musicConnectSearchResults]);
 
     useEffect(() => {
-        searchSpotifyService();
+        if (serviceId === "spotify") {
+            searchSpotifyService();
+        }
+        else {
+            searchMusicConnect();
+        }
     }, [searchQuery]);
 
     const searchSpotifyService = async () => {
         await dispatch(searchSpotify({ userId: 'user123', query: searchQuery}));
+    }
+
+    const searchMusicConnect = async () => {
+        await dispatch(search({userId: 'user123', query: searchQuery}));
     }
 
     return (

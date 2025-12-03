@@ -1,4 +1,5 @@
-import {createAsyncThunk, createSlice} from '@reduxjs/toolkit'
+import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
+import {SEARCH_SERVICE_URL} from "../config.js";
 
 interface Search {
     query: string,
@@ -13,14 +14,14 @@ interface SearchSlice {
     query: string,
     error: string,
     loading: boolean,
-    results: SearchResponse,
+    searchResults: SearchResponse,
 }
 
 const initialState: SearchSlice = {
     query: "",
     error: "",
     loading: false,
-    results: null,
+    searchResults: null,
 };
 
 export const search = createAsyncThunk(
@@ -28,8 +29,10 @@ export const search = createAsyncThunk(
     async (params: {userId: string, query: string}) => {
         try {
             const {userId, query} = params;
+            const headers = new Headers();
+            headers.set('X-User-Id', userId);
             // Call to search all apps
-            const response = await fetch(`${}`);
+            const response = await fetch(`${SEARCH_SERVICE_URL}?q=${query}`, {});
 
             return await response.json();
         } catch (error) {
@@ -43,7 +46,7 @@ export const addTrackToPlaylist = createAsyncThunk(
     async () => {
         try {
             // Call to search all apps
-            const response = await fetch(`${}/playlist/add`);
+            const response = await fetch(`${SEARCH_SERVICE_URL}/playlist/add`);
 
             return await response.json();
         } catch (error) {
@@ -64,7 +67,8 @@ const SearchSlice = createSlice({
             })
             .addCase(search.fulfilled, (state, action) => {
                 state.loading = false;
-                state.results = action.payload;
+                console.log(action.payload);
+                state.searchResults = action.payload;
             })
             .addCase(search.rejected, (state) => {
                 state.loading = false;
@@ -76,7 +80,7 @@ const SearchSlice = createSlice({
             })
             .addCase(addTrackToPlaylist.fulfilled, (state, action) => {
                 state.loading = false;
-                state.results = action.payload;
+                state.searchResults = action.payload;
             })
             .addCase(addTrackToPlaylist.rejected, (state) => {
                 state.loading = false;
