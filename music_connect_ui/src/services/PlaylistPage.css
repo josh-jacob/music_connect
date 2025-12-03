@@ -1,0 +1,9 @@
+.playlist-container {
+    text-align: right;
+
+    .back-button {
+        color: #20B654;
+        outline-color: #20B654;
+        margin: 10px;
+    }
+}

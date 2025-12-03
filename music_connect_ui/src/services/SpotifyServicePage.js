@@ -17,13 +17,16 @@ import {useEffect, useState} from "react";
 import PlaylistItem from "../components/PlaylistItem";
 import BlankAlbumCover from "../files/blank-album-cover.png";
 import CreateNewPlaylistModal from "../modal/CreateNewPlaylistModal";
+import {useNavigate} from "react-router";
 
 const SpotifyServicePage = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
+
     const isAuthenticated = useSelector((state) => state.spotify.user.authenticated);
     const playlists = useSelector((state) => state.spotify.playlists);
     const playlistsLoading = useSelector((state) => state.spotify.loading);
-    // TODO: const userName = useSelector() userSlice selectUsername
+    const userName = useSelector((state) => state.users.user.username);
 
     const [openCreatePlaylistModal, setOpenCreatePlaylistModal] = useState(false);
 
@@ -83,12 +86,12 @@ const SpotifyServicePage = () => {
                     </Tooltip> : null }
                 </div>
                 <div className={"playlists-container"}>
-                    {playlistsLoading ? <div className={"results-loading-container"}>
+                    {isAuthenticated && playlistsLoading ? <div className={"results-loading-container"}>
                         <CircularProgress className={"loading-spinner"} sx={{ alignSelf: "center" }}/>
                     </div> : null}
                     {!isAuthenticated ? <p className="playlist-unauthenticated">Sign into Spotify to see user playlists.</p> : null }
                     {isAuthenticated ? playlists.map((playlist) => (
-                        <PlaylistItem playlistName={playlist.name} playlistImage={playlist.image !== "" ? playlist.image : BlankAlbumCover} />
+                        <Button onClick={() => navigate(`./playlist/${playlist.id}`)}><PlaylistItem playlistName={playlist.name} playlistImage={playlist.image !== "" ? playlist.image : BlankAlbumCover} /></Button>
                     )) : null}
                     <CreateNewPlaylistModal open={openCreatePlaylistModal} onClose={() => setOpenCreatePlaylistModal(false)} onSubmit={createPlaylist} />
                 </div>

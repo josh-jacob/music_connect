@@ -11,21 +11,28 @@
     }
 
     .auth-wrapper {
-        width: 53%;
+        width: 90%;
         display: grid;
         place-items: center;
 
-        .username-container, .password-container {
-            width: 85%;
+        .email-container, .name-container, .username-container, .password-container {
+            width: 50%;
             display: flex;
             align-content: center;
             justify-content: space-between;
             margin: 10px;
 
-            .username-label, .password-label {
+            .email-label, .name-label, .username-label, .password-label {
                 margin: 10px;
                 text-align: left;
             }
+        }
+        .username-requirements, .password-requirements {
+            width: 50%;
+            font-size: 10px;
+            color: red;
+            text-align: right;
+            margin-top: -10px;
         }
     }
 }
@@ -34,29 +41,13 @@
     width: 45%;
     margin: 5px;
 
-    .create-account {
-        margin: 10px;
-        font-size: 10px;
-        text-align: left;
-
-        a {
-            color: #20B654;
-        }
-        a:visited {
-            color: black;
-        }
-    }
-
-    .login-error {
-        color: red;
-    }
-
-    .stay-unauthenticated {
+    .back-button {
         float: left;
         width: fit-content;
     }
 
-    .login-button {
+    .create-account-button {
         float: right;
+        width: fit-content;
     }
 }

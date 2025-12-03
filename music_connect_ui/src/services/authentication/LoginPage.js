@@ -1,4 +1,4 @@
-import './Login.css';
+import './LoginPage.css';
 import TextField from '@mui/material/TextField';
 import {useEffect, useState} from "react";
 import {Alert, Button} from "@mui/material";
@@ -6,9 +6,12 @@ import {useNavigate} from "react-router";
 import musicConnectLogo from '../../files/music-connect-logo.png';
 import youTubeMusicLogo from '../../files/youtube-music-logo.png';
 import Header from '../../components/Header';
+import {login} from "../../slices/UserSlice.ts";
+import {useDispatch, useSelector} from "react-redux";
 
 const LoginPage = ({ type }) => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const [logo, setLogo] = useState(musicConnectLogo);
     const [username, setUsername] = useState("");
@@ -17,27 +20,26 @@ const LoginPage = ({ type }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
-    let isAuthenticated;
+
+    const isMusicConnectUserAuthenticated = useSelector((state) => state.users.user.sessionActive);
+    const authToken = useSelector((state) => state.users.user.token);
+    const loginError = useSelector((state) => state.users.error);
 
     useEffect(() => {
         if (type === "youtube-music") {
             setLogo(youTubeMusicLogo);
             setColour("#FF0000");
-            isAuthenticated = false; // TODO
         } else {
             setLogo(musicConnectLogo);
             setColour("#20B654");
-            isAuthenticated = false; // TODO
         }
     }, [type]);
 
     const authenticate = async () => {
         setLoading(true);
-        setError(false);
 
-        if (username.length === 0 || (type === "music-connect" && password.length === 0)) {
+        if (username === "" || (type === "music-connect" && password === "")) {
             setError(true);
-            setErrorMessage("Username and password fields are required.");
         }
         else {
             // call Slice to authenticate and get user data.
@@ -45,19 +47,43 @@ const LoginPage = ({ type }) => {
                 // TODO
             }
             else {
-                // TODO
+                await dispatch(login({username: username, password: password}));
+                setTimeout(() => {}, 1500)
             }
         }
-
         setLoading(false);
-        if (isAuthenticated) {
-            navigate("/");
+    }
+
+    useEffect(() => {
+        if (type === "youtube-music") {
+            // TODO
         }
         else {
-            setError(true);
-            setErrorMessage("There was a problem logging you in. Please check your credentials and try again.");
+            if (!loading && isMusicConnectUserAuthenticated) {
+                localStorage.setItem("accessToken", authToken);
+                navigate("/");
+            }
+            else if (!loading) {
+                setError(true);
+            }
         }
-    }
+    }, [loading, isMusicConnectUserAuthenticated]);
+
+    useEffect(() => {
+        if (error) {
+            if (username === "" || (type === "music-connect" && password === "")) {
+                setErrorMessage("Username and password fields are required.");
+            }
+            else {
+                setErrorMessage(loginError);
+            }
+        }
+    }, [loginError, error])
+
+    useEffect(() => {
+        setError(false);
+        setErrorMessage("");
+    }, [username, password]);
 
     return (
         <div>
@@ -77,6 +103,7 @@ const LoginPage = ({ type }) => {
                 </div>
                 <div className={"auth-footer"}>
                     {type === "music-connect" ? <p className={"create-account"}>Don't have an account? <a href={'/create-account'}>Create Account</a></p> : <></>}
+                    {type === "music-connect" ? <p className={"reset-password"}>Forgot Password? <a href={'/reset-password'}>Reset Password</a></p> : <></>}
                     {error ? <Alert severity="error">{errorMessage}</Alert>: ""}
                     {type !== "music-connect" ? <Button className={"stay-unauthenticated"} variant="contained" sx={{ backgroundColor: "black", color: "white", width: "100px" }} onClick={() => {navigate("/youtube-music")}} >Stay Unauthenticated</Button> : null}
                     <Button className={"login-button"} variant="contained" loading={loading} loadingIndicator="Loading…" sx={{ backgroundColor: colour, color: "white", width: "100px" }} onClick={authenticate}>Login</Button>

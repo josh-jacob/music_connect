@@ -122,19 +122,20 @@ export const searchSpotify = createAsyncThunk(
 
 export const getSavedSpotifyTracks = createAsyncThunk(
     "spotify/getSavedTracks",
-    async (props: { userId: string, playlistId: string, tracks: AddTrackToPlaylistRequest }) => {
-        try { //TODO
-            const {userId, playlistId, tracks} = props;
+    async (props: { userId: string, tracks: AddTrackToPlaylistRequest }) => {
+        try {
+            const {userId, tracks} = props;
             const headers = new Headers();
             headers.set('X-User-Id', userId);
+            headers.set('Content-Type', 'application/json');
             const requestOptions = {
-                method: 'POST',
+                method: 'GET',
                 headers: headers,
                 body: JSON.stringify(tracks)
             };
 
-            // Call to add track to existing playlist
-            const response = await fetch(`${SPOTIFY_SERVICE_URL}/music/playlist/${playlistId}/add`, requestOptions);
+            // Call to get saved tracks
+            const response = await fetch(`${SPOTIFY_SERVICE_URL}/music/tracks`, requestOptions);
 
             return await response.json();
         } catch (error) {
@@ -158,6 +159,28 @@ export const fetchSpotifyPlaylists = createAsyncThunk(
             const response = await fetch(`${SPOTIFY_SERVICE_URL}/music/playlists`, requestOptions);
 
             return await response.json();
+        } catch (error) {
+            throw (error.message);
+        }
+    }
+);
+
+export const fetchSpotifyPlaylistTracks = createAsyncThunk(
+    "spotify/fetchPlaylistTracks",
+    async (props: {userId: string, playlistId: string}) => {
+        try {
+            const {userId, playlistId} = props;
+            const headers = new Headers();
+            headers.set('X-User-Id', userId);
+            const requestOptions = {
+                method: 'GET',
+                headers: headers
+            };
+
+            // Call to fetch user playlists
+            const response = await fetch(`${SPOTIFY_SERVICE_URL}/music/playlist/${playlistId}/tracks`, requestOptions);
+            const result = await response.json();
+            return {playlistId, result};
         } catch (error) {
             throw (error.message);
         }
@@ -215,18 +238,19 @@ export const addSpotifyTrackToPlaylist = createAsyncThunk(
 export const removeSpotifyTrackFromPlaylist = createAsyncThunk(
     "spotify/removeTrackFromPlaylist",
     async (props: { userId: string, playlistId: string, tracks: AddTrackToPlaylistRequest }) => {
-        try { // TODO
+        try {
             const {userId, playlistId, tracks} = props;
             const headers = new Headers();
             headers.set('X-User-Id', userId);
+            headers.set('Content-Type', 'application/json');
             const requestOptions = {
                 method: 'POST',
                 headers: headers,
                 body: JSON.stringify(tracks)
             };
 
-            // Call to add track to existing playlist
-            const response = await fetch(`${SPOTIFY_SERVICE_URL}/music/playlist/${playlistId}/add`, requestOptions);
+            // Call to remove track from existing playlist
+            const response = await fetch(`${SPOTIFY_SERVICE_URL}/music/playlist/${playlistId}/remove`, requestOptions);
 
             return await response.json();
         } catch (error) {
@@ -296,6 +320,17 @@ const SpotifySlice = createSlice({
                 state.loading = false;
                 state.error = "An error occurred";
             })
+            .addCase(getSavedSpotifyTracks.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(getSavedSpotifyTracks.fulfilled, (state) => {
+                state.loading = false;
+            })
+            .addCase(getSavedSpotifyTracks.rejected, (state) => {
+                state.loading = false;
+                state.error = "An error occurred";
+            })
             .addCase(fetchSpotifyPlaylists.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -313,6 +348,31 @@ const SpotifySlice = createSlice({
                 }
             })
             .addCase(fetchSpotifyPlaylists.rejected, (state) => {
+                state.loading = false;
+                state.error = "An error occurred";
+            })
+            .addCase(fetchSpotifyPlaylistTracks.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchSpotifyPlaylistTracks.fulfilled, (state, action) => {
+                state.loading = false;
+                // Find playlist and add tracks
+                const playlists = state.playlists;
+                for (let pos in playlists) {
+                    if (playlists[pos].id === action.payload.playlistId) {
+                        playlists[pos].tracks = action.payload.result.items.map((track) => ({
+                            id: track.track.id,
+                            name: track.track.name,
+                            artist: track.track.artists[0].name,
+                            album: track.track.album.name,
+                            albumCover: track.track.album.images[0].url,
+                            uri: track.track.uri,
+                        }));
+                    }
+                }
+            })
+            .addCase(fetchSpotifyPlaylistTracks.rejected, (state) => {
                 state.loading = false;
                 state.error = "An error occurred";
             })
@@ -342,6 +402,18 @@ const SpotifySlice = createSlice({
                 // TODO Add track to playlist object
             })
             .addCase(addSpotifyTrackToPlaylist.rejected, (state) => {
+                state.loading = false;
+                state.error = "An error occurred";
+            })
+            .addCase(removeSpotifyTrackFromPlaylist.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(removeSpotifyTrackFromPlaylist.fulfilled, (state) => {
+                state.loading = false;
+                // TODO Add track to playlist object
+            })
+            .addCase(removeSpotifyTrackFromPlaylist.rejected, (state) => {
                 state.loading = false;
                 state.error = "An error occurred";
             });
