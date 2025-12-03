@@ -2,16 +2,24 @@ from fastapi import FastAPI, Request
 from dotenv import load_dotenv
 load_dotenv()
 from fastapi.responses import RedirectResponse
+<<<<<<< HEAD:music_connect/connectors/youtube_connector/main.py
 from oauth_handler import get_flow, get_authenticated_service
 from token_storage import save_tokens
 from pydantic import BaseModel
+=======
+from app.oauth_handler import get_flow, get_authenticated_service
+from app.token_storage import save_tokens
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+from googleapiclient.errors import HttpError
+from app.refresh_token import refresh_youtube_token
+>>>>>>> youtube:music_connect/connectors/youtube_connector/app/main.py
 
 
 import os
 
 app = FastAPI()
 
-from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
@@ -58,10 +66,15 @@ def youtube_callback(request: Request):
     }
     save_tokens(token_data)
 
+    ui_url = os.getenv("YOUTUBE_UI_REDIRECT_URL")
+
+    # If UI redirect is configured → redirect to UI
+    if ui_url:
+        return RedirectResponse(ui_url)
+
+    # Otherwise return JSON for easier local testing
     return {"message": "YouTube connected and tokens saved!"}
 
-
-from refresh_token import refresh_youtube_token
 """
 Returns all items/videos inside a specific playlist.
 Automatically refreshes token if expired.
@@ -109,6 +122,7 @@ def get_playlist_items(playlist_id: str):
 Returns all playlists owned by the authenticated user.
 Useful for UI playlist selection and migration features.
 """
+
 @app.get("/youtube/playlists")
 def get_user_playlists():
     credentials = refresh_youtube_token()
@@ -120,28 +134,45 @@ def get_user_playlists():
     playlists = []
     next_page_token = None
 
-    while True:
-        response = youtube.playlists().list(
-            part="snippet,contentDetails",
-            mine=True,
-            maxResults=50,
-            pageToken=next_page_token
-        ).execute()
+    try:
+        while True:
+            response = youtube.playlists().list(
+                part="snippet,contentDetails",
+                mine=True,
+                maxResults=50,
+                pageToken=next_page_token
+            ).execute()
 
-        for p in response["items"]:
-            playlists.append({
-                "id": p["id"],
-                "title": p["snippet"]["title"],
-                "thumbnail": p["snippet"]["thumbnails"]["default"]["url"] 
-                    if "default" in p["snippet"]["thumbnails"] else None,
-                "videoCount": p["contentDetails"]["itemCount"]
-            })
+            items = response.get("items", [])
 
-        next_page_token = response.get("nextPageToken")
-        if not next_page_token:
-            break
+            if not items:
+                # User has NO playlists or NO channel
+                break
+
+            for p in items:
+                snippet = p.get("snippet", {})
+                thumbnails = snippet.get("thumbnails", {})
+
+                playlists.append({
+                    "id": p.get("id"),
+                    "title": snippet.get("title"),
+                    "thumbnail": thumbnails.get("default", {}).get("url"),
+                    "videoCount": p.get("contentDetails", {}).get("itemCount", 0)
+                })
+
+            next_page_token = response.get("nextPageToken")
+            if not next_page_token:
+                break
+
+    except HttpError as e:
+        if e.resp.status == 404:
+            return []
+        raise e
 
     return playlists
+
+
+
 
 """
 Search YouTube for videos matching a query.
@@ -243,8 +274,11 @@ def remove_track_from_playlist(playlist_id: str, videoId: str):
         "videoId": videoId
     }
 
+<<<<<<< HEAD:music_connect/connectors/youtube_connector/main.py
     from pydantic import BaseModel
 
+=======
+>>>>>>> youtube:music_connect/connectors/youtube_connector/app/main.py
 class CreatePlaylistRequest(BaseModel):
     title: str
     description: str | None = ""
@@ -283,35 +317,46 @@ def create_playlist(body: CreatePlaylistRequest):
 @app.get("/youtube/me")
 def get_user_info():
     """
-    Returns information about the authenticated YouTube user:
-    name, channel ID, profile picture, etc.
+    Returns basic information about the authenticated YouTube user.
+    Safe for all users, even those without channels.
     """
     credentials = refresh_youtube_token()
     if credentials is None:
         return {"error": "Please login first using /auth/youtube/login"}
-
+    
     youtube = get_authenticated_service(credentials)
 
     response = youtube.channels().list(
-        part="snippet,contentDetails,statistics",
+        part="snippet,contentDetails",
         mine=True
     ).execute()
 
-    if not response["items"]:
-        return {"error": "No YouTube channel found for this user"}
+    if not response.get("items"):
+        return {
+            "channelId": None,
+            "title": None,
+            "description": None,
+            "profileImage": None,
+            "country": None,
+            "uploadsPlaylistId": None
+        }
 
     data = response["items"][0]
+    snippet = data.get("snippet", {})
+    thumbnails = snippet.get("thumbnails", {})
 
     return {
-        "channelId": data["id"],
-        "title": data["snippet"]["title"],
-        "description": data["snippet"].get("description"),
-        "profileImage": data["snippet"]["thumbnails"]["default"]["url"],
-        "country": data["snippet"].get("country"),
-        "viewCount": data["statistics"].get("viewCount"),
-        "subscriberCount": data["statistics"].get("subscriberCount"),
-        "videoCount": data["statistics"].get("videoCount"),
-        "uploadsPlaylistId": data["contentDetails"]["relatedPlaylists"]["uploads"]
+        "channelId": data.get("id"),
+        "title": snippet.get("title"),
+        "description": snippet.get("description"),
+        "profileImage": thumbnails.get("default", {}).get("url"),
+        "country": snippet.get("country"),
+        "uploadsPlaylistId": data.get("contentDetails", {})
+                                 .get("relatedPlaylists", {})
+                                 .get("uploads")
     }
 
+<<<<<<< HEAD:music_connect/connectors/youtube_connector/main.py
 
+=======
+>>>>>>> youtube:music_connect/connectors/youtube_connector/app/main.py
