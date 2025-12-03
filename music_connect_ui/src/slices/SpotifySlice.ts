@@ -15,6 +15,7 @@ interface Song {
     album: string,
     albumCover: string,
     uri: string,
+    serviceId: string,
 }
 
 interface Playlist {
@@ -61,6 +62,7 @@ export const loginToSpotify = createAsyncThunk(
     "spotify/login",
     async (userId: string) => {
         try {
+            console.log(userId);
             const headers = new Headers();
             headers.set('X-User-Id', userId);
             const requestOptions = {
@@ -311,7 +313,8 @@ const SpotifySlice = createSlice({
                         artist: action.payload[pos].artists[0].name,
                         album: action.payload[pos].album.name,
                         albumCover: action.payload[pos].album.images[0].url,
-                        uri: action.payload[pos].uri
+                        uri: action.payload[pos].uri,
+                        serviceId: "spotify"
                     });
                 }
                 state.searchResults = results;
@@ -399,7 +402,6 @@ const SpotifySlice = createSlice({
             })
             .addCase(addSpotifyTrackToPlaylist.fulfilled, (state) => {
                 state.loading = false;
-                // TODO Add track to playlist object
             })
             .addCase(addSpotifyTrackToPlaylist.rejected, (state) => {
                 state.loading = false;
@@ -411,7 +413,6 @@ const SpotifySlice = createSlice({
             })
             .addCase(removeSpotifyTrackFromPlaylist.fulfilled, (state) => {
                 state.loading = false;
-                // TODO Add track to playlist object
             })
             .addCase(removeSpotifyTrackFromPlaylist.rejected, (state) => {
                 state.loading = false;

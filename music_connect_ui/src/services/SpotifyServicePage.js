@@ -5,7 +5,7 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faSpotify} from "@fortawesome/free-brands-svg-icons";
 import Badge from "@mui/material/Badge";
 import {faPlusCircle, faUserCircle} from "@fortawesome/free-solid-svg-icons";
-import {Button, CircularProgress, IconButton, Tooltip} from "@mui/material";
+import {Button, IconButton, Tooltip} from "@mui/material";
 import {useDispatch, useSelector} from "react-redux";
 import {
     createSpotifyPlaylist,
@@ -26,7 +26,7 @@ const SpotifyServicePage = () => {
     const isAuthenticated = useSelector((state) => state.spotify.user.authenticated);
     const playlists = useSelector((state) => state.spotify.playlists);
     const playlistsLoading = useSelector((state) => state.spotify.loading);
-    const userName = useSelector((state) => state.users.user.username);
+    const username = localStorage.getItem("username");
 
     const [openCreatePlaylistModal, setOpenCreatePlaylistModal] = useState(false);
 
@@ -40,11 +40,11 @@ const SpotifyServicePage = () => {
     }, [playlists.length]);
 
     const fetchPlaylists = async () => {
-        await dispatch(fetchSpotifyPlaylists('user123')); //TODO: replace with userName
+        await dispatch(fetchSpotifyPlaylists(username));
     }
 
     const getUser = async () => {
-        await dispatch(fetchSpotifyUser('user123')); //TODO: replace with userName
+       await dispatch(fetchSpotifyUser(username));
     };
 
     const createPlaylist = async (name, description, isPrivate) => {
@@ -54,12 +54,12 @@ const SpotifyServicePage = () => {
             public: !isPrivate,
         };
 
-        await dispatch(createSpotifyPlaylist({userId: 'user123', playlistRequest: createPlaylistRequest}));
+        await dispatch(createSpotifyPlaylist({userId: username, playlistRequest: createPlaylistRequest}));
         setOpenCreatePlaylistModal(false);
     };
 
     const authenticateUser = async () => {
-        await dispatch(loginToSpotify('user123')); //TODO: replace with userName
+        await dispatch(loginToSpotify(username));
     };
 
     return (
@@ -86,9 +86,6 @@ const SpotifyServicePage = () => {
                     </Tooltip> : null }
                 </div>
                 <div className={"playlists-container"}>
-                    {isAuthenticated && playlistsLoading ? <div className={"results-loading-container"}>
-                        <CircularProgress className={"loading-spinner"} sx={{ alignSelf: "center" }}/>
-                    </div> : null}
                     {!isAuthenticated ? <p className="playlist-unauthenticated">Sign into Spotify to see user playlists.</p> : null }
                     {isAuthenticated ? playlists.map((playlist) => (
                         <Button onClick={() => navigate(`./playlist/${playlist.id}`)}><PlaylistItem playlistName={playlist.name} playlistImage={playlist.image !== "" ? playlist.image : BlankAlbumCover} /></Button>
