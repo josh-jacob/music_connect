@@ -5,8 +5,9 @@ FROM python:3.11-slim
 RUN useradd -m appuser
 WORKDIR /app
 
-# Install system deps if needed (expand as you add features)
-RUN apt-get update && apt-get install -y --no-install-recommends \        build-essential \        && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends build-essential \
+ && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency manifest and install first (better layer caching)
 COPY requirements.txt ./

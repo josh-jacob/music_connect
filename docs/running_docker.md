@@ -30,7 +30,8 @@ Copy the .env.example (or template) for each service.
 ## 3. Starting the Stack
 
 From the repo root (where docker-compose.yml lives):
-- In the console run ``docker compose up -d --build``
+- In the console run 
+``docker compose up -d --build``
 
 Checking running containers
 ``docker compose ps``
