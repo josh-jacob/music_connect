@@ -112,9 +112,11 @@ def get_playlist_items(playlist_id: str):
 
 =======
             items.append({
-                "title": item["snippet"]["title"],
+                "title": snippet["title"],
                 "videoId": item["contentDetails"]["videoId"],
-                "thumbnail": item["snippet"]["thumbnails"]["default"]["url"]
+                "thumbnail": snippet["thumbnails"]["default"]["url"],
+                "channel": snippet.get("videoOwnerChannelTitle")  # preferred field
+                            or snippet.get("channelTitle")        # fallback for older videos
             })
 
 >>>>>>> main
