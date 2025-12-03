@@ -1,0 +1,15 @@
+# Prevent secrets from being copied into the image
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs
+*.log
+
+# Git + editor files
+.git
+.gitignore
+.vscode

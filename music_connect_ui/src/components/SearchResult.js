@@ -6,14 +6,22 @@ import AddTrackToPlaylistModal from "../modal/AddTrackToPlaylistModal";
 import {useState} from "react";
 import {addSpotifyTrackToPlaylist} from "../slices/SpotifySlice.ts";
 import {useDispatch} from "react-redux";
+import {addYouTubeTrackToPlaylist} from "../slices/YouTubeMusicSlice.ts";
 
-const SearchResultItem = ({name, artist, album, uri, image}) => {
+const SearchResultItem = ({name, artist, album, uri, image, serviceId}) => {
     const dispatch = useDispatch();
     const [openAddTrackToPlaylistModal, setOpenAddTrackToPlaylistModal] = useState(false);
 
+    const username = localStorage.getItem("username");
+
     const addToPlaylist = async (id) => {
-        const track = { uris: [uri] }
-        await dispatch(addSpotifyTrackToPlaylist({userId: 'user123', playlistId: id, tracks: track })); //TODO replace with username
+        if (serviceId === "spotify") {
+            const track = { uris: [uri] }
+            await dispatch(addSpotifyTrackToPlaylist({userId: username, playlistId: id, tracks: track }));
+        }
+        else { //serviceId === "youtube"
+            await dispatch(addYouTubeTrackToPlaylist({playlistId: id, videoId: uri }));
+        }
         setOpenAddTrackToPlaylistModal(false);
     };
 
@@ -32,7 +40,7 @@ const SearchResultItem = ({name, artist, album, uri, image}) => {
                     <FontAwesomeIcon icon={faPlusCircle} color="#1ED760" />
                 </IconButton>
             </Tooltip>
-            <AddTrackToPlaylistModal open={openAddTrackToPlaylistModal} onClose={() => setOpenAddTrackToPlaylistModal(false)} onSubmit={addToPlaylist} />
+            <AddTrackToPlaylistModal open={openAddTrackToPlaylistModal} onClose={() => setOpenAddTrackToPlaylistModal(false)} serviceId={serviceId} onSubmit={addToPlaylist} />
         </div>
     );
 }

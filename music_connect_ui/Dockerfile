@@ -1,23 +1,20 @@
-# Use an official Node runtime as a parent image
-FROM node:16
+# music_connect_ui/Dockerfile
+FROM node:16-slim
 
-# Set the working directory to /app
 WORKDIR /app
 
-# Copy package.json and package-lock.json to the working directory
+# Install deps
 COPY package*.json ./
-
-# Install the dependencies
 RUN npm install
 
-# Copy the remaining application files to the working directory
-COPY src .
+# Copy the rest of the app (src, public, etc.)
+COPY . .
 
-# Build the application
-RUN npm run build
+# CRA dev server config
+ENV PORT=3000
+ENV HOST=0.0.0.0
 
-# Expose port 3000 for the application
 EXPOSE 3000
 
-# Start the application
+# Start the CRA dev server (reads REACT_APP_* at runtime)
 CMD ["npm", "start"]
