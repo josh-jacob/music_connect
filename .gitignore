@@ -3,6 +3,8 @@
 ```gitignore
 # macOS
 .DS_Store
+docker-compose.yml
+Dockerfile.ibmcloud
 
 # Environment files
 .env
@@ -11,6 +13,7 @@
 # Logs and temp files
 *.log
 *.tmp
+docs/connecting_ibmPostgres.txt
 
 # Python cache
 __pycache__/
