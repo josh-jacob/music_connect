@@ -5,7 +5,7 @@ import Badge from '@mui/material/Badge';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faYoutube} from "@fortawesome/free-brands-svg-icons";
 import {faPlusCircle, faUserCircle} from "@fortawesome/free-solid-svg-icons";
-import {Button, IconButton, Tooltip} from "@mui/material";
+import {Button, CircularProgress, IconButton, Tooltip} from "@mui/material";
 import {useNavigate} from "react-router";
 import {useDispatch, useSelector} from "react-redux";
 import {
@@ -85,6 +85,9 @@ const YouTubeMusicServicePage = () => {
                     </Tooltip> : null }
                 </div>
                 <div className={"playlists-container"}>
+                    {playlistsLoading ? <div className={"results-loading-container"}>
+                        <CircularProgress className={"loading-spinner"} sx={{ alignSelf: "center" }}/>
+                    </div> : null}
                     {!isAuthenticated ? <p className="playlist-unauthenticated">Sign into YouTube Music to see user playlists.</p> : null}
                     {isAuthenticated ? playlists.map((playlist) => (
                         <Button onClick={() => navigate(`./playlist/${playlist.id}`)}><PlaylistItem playlistName={playlist.name} playlistImage={playlist.image !== '' ? playlist.image : BlankAlbumCover} /></Button>
