@@ -6,12 +6,35 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_TIME = 900000; 
+
+// Database connection pool
+const pool = new Pool({
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 5432,
+  database: process.env.DB_NAME || 'musicconnect',
+  user: process.env.DB_USER || 'musiconnect_app',
+  password: process.env.DB_PASSWORD,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+// Test database connection
+pool.connect((err, client, release) => {
+  if (err) {
+    console.error('Error connecting to database:', err.stack);
+  } else {
+    console.log('Database connected successfully');
+    release();
+  }
+});
 
 // Email configuration
 const EMAIL_USER = process.env.EMAIL_USER || 'your-email@gmail.com';
@@ -36,8 +59,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// In-memory Database
-const users = new Map();
+// In-memory storage for tokens and rate limiting only
 const resetTokens = new Map();
 const verificationTokens = new Map(); 
 const tokenBlacklist = new Set();
@@ -184,7 +206,7 @@ const authenticateToken = (req, res, next) => {
 
 // Health Check
 app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', service: 'Auth Service', timestamp: new Date().toISOString(), version: '2.1.0' });
+  res.json({ status: 'healthy', service: 'Auth Service', timestamp: new Date().toISOString(), version: '2.2.0' });
 });
 
 // Register
@@ -194,24 +216,35 @@ app.post('/api/auth/register', async (req, res) => {
     if (!username || !email || !password)
       return res.status(400).json({ error: 'Username, email, and password required' });
 
-    if (users.has(username)) return res.status(409).json({ error: 'Username already exists' });
+    // Check if username exists
+    const usernameCheck = await pool.query(
+      'SELECT id FROM core.users WHERE email = $1',
+      [username]
+    );
+    if (usernameCheck.rows.length > 0) {
+      return res.status(409).json({ error: 'Username already exists' });
+    }
 
-    for (const [, user] of users) {
-      if (user.email === email) return res.status(409).json({ error: 'Email already exists' });
+    // Check if email exists
+    const emailCheck = await pool.query(
+      'SELECT id FROM core.users WHERE email = $1',
+      [email]
+    );
+    if (emailCheck.rows.length > 0) {
+      return res.status(409).json({ error: 'Email already exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-    const newUser = { 
-      username, 
-      email, 
-      fullName: fullName || username, 
-      password: hashedPassword, 
-      createdAt: new Date().toISOString(), 
-      isActive: true,
-      verified: false
-    };
-
-    users.set(username, newUser);
+    
+    // Insert new user
+    const result = await pool.query(
+      `INSERT INTO core.users (email, password_hash, display_name, is_active) 
+       VALUES ($1, $2, $3, true) 
+       RETURNING id, email, display_name, created_at, is_active`,
+      [email, hashedPassword, fullName || username]
+    );
+    
+    const newUser = result.rows[0];
     
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
@@ -231,8 +264,7 @@ app.post('/api/auth/register', async (req, res) => {
 
     res.status(201).json({ 
       message: 'Account created! Please check your email to verify your account.',
-      user: { username, email, fullName: newUser.fullName }
-     
+      user: { username, email, fullName: newUser.display_name }
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -241,7 +273,7 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 // Verify Email
-app.post('/api/auth/verify-email', (req, res) => {
+app.post('/api/auth/verify-email', async (req, res) => {
   try {
     const { token } = req.body;
     
@@ -260,24 +292,21 @@ app.post('/api/auth/verify-email', (req, res) => {
       return res.status(400).json({ error: 'Verification token has expired. Please request a new one.' });
     }
 
-    const user = users.get(tokenData.username);
+    // Update user verification status
+    const result = await pool.query(
+      'UPDATE core.users SET is_active = true, updated_at = NOW() WHERE email = $1 RETURNING *',
+      [tokenData.username]
+    );
+    
+    const user = result.rows[0];
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    if (user.verified) {
-      verificationTokens.delete(token);
-      return res.status(400).json({ error: 'Email already verified' });
-    }
-
-    user.verified = true;
-    user.verifiedAt = new Date().toISOString();
-    users.set(user.username, user);
-    
     verificationTokens.delete(token);
     
-    logActivity(user.username, 'EMAIL_VERIFIED');
+    logActivity(tokenData.username, 'EMAIL_VERIFIED');
 
     res.json({ message: 'Email verified successfully! You can now log in.' });
   } catch (error) {
@@ -286,7 +315,7 @@ app.post('/api/auth/verify-email', (req, res) => {
   }
 });
 
-//Resend Verification Email
+// Resend Verification Email
 app.post('/api/auth/resend-verification', async (req, res) => {
   try {
     const { email } = req.body;
@@ -295,30 +324,29 @@ app.post('/api/auth/resend-verification', async (req, res) => {
       return res.status(400).json({ error: 'Email required' });
     }
 
-    let user = null;
-    for (const [, u] of users) {
-      if (u.email === email) {
-        user = u;
-        break;
-      }
-    }
+    const result = await pool.query(
+      'SELECT email, display_name, is_active FROM core.users WHERE email = $1',
+      [email]
+    );
 
-    if (!user) {
+    if (result.rows.length === 0) {
       return res.json({ message: 'If the email exists and is not verified, a verification link has been sent.' });
     }
 
-    if (user.verified) {
+    const user = result.rows[0];
+
+    if (user.is_active) {
       return res.status(400).json({ error: 'Email is already verified' });
     }
 
     const verificationToken = crypto.randomBytes(32).toString('hex');
     verificationTokens.set(verificationToken, {
-      username: user.username,
+      username: user.email,
       expiresAt: Date.now() + 24 * 60 * 60 * 1000
     });
 
-    await sendVerificationEmail(email, user.username, verificationToken);
-    logActivity(user.username, 'VERIFICATION_EMAIL_RESENT');
+    await sendVerificationEmail(email, user.email, verificationToken);
+    logActivity(user.email, 'VERIFICATION_EMAIL_RESENT');
 
     res.json({ message: 'Verification email sent! Please check your inbox.' });
   } catch (error) {
@@ -334,19 +362,24 @@ app.post('/api/auth/login', async (req, res) => {
     const lock = isAccountLocked(username);
     if (lock.locked) return res.status(423).json({ error: `Account locked. Try again in ${lock.remainingTime} minutes.` });
 
-    const user = users.get(username);
+    const result = await pool.query(
+      'SELECT * FROM core.users WHERE email = $1',
+      [username]
+    );
+    
+    const user = result.rows[0];
+    
     if (!user) {
       const result = recordFailedAttempt(username);
       return res.status(401).json({ error: 'Invalid credentials', attemptsRemaining: 5 - result.attempts });
     }
 
-    if (!await bcrypt.compare(password, user.password)) {
+    if (!await bcrypt.compare(password, user.password_hash)) {
       const result = recordFailedAttempt(username);
       return res.status(401).json({ error: 'Invalid credentials', attemptsRemaining: 5 - result.attempts });
     }
 
-  
-    if (!user.verified) {
+    if (!user.is_active) {
       return res.status(403).json({ 
         error: 'Please verify your email before logging in. Check your inbox for the verification link.',
         needsVerification: true 
@@ -356,8 +389,21 @@ app.post('/api/auth/login', async (req, res) => {
     clearLoginAttempts(username);
     logActivity(username, 'LOGIN_SUCCESS');
 
-    const token = jwt.sign({ username, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
-    res.json({ message: 'Logged in successfully', user: { username, email: user.email, fullName: user.fullName }, token });
+    const token = jwt.sign({ 
+      username, 
+      email: user.email,
+      userId: user.id 
+    }, JWT_SECRET, { expiresIn: '24h' });
+    
+    res.json({ 
+      message: 'Logged in successfully', 
+      user: { 
+        username, 
+        email: user.email, 
+        fullName: user.display_name 
+      }, 
+      token 
+    });
 
   } catch (error) {
     console.error('Login error:', error);
@@ -380,44 +426,87 @@ app.get('/api/auth/verify', authenticateToken, (req, res) => {
 });
 
 // Get Profile
-app.get('/api/auth/profile', authenticateToken, (req, res) => {
-  const user = users.get(req.user.username);
-  if (!user) return res.status(404).json({ error: 'User not found' });
+app.get('/api/auth/profile', authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, email, display_name, created_at, updated_at, is_active FROM core.users WHERE email = $1',
+      [req.user.username]
+    );
+    
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-  res.json({
-    username: user.username,
-    email: user.email,
-    fullName: user.fullName,
-    avatarUrl: user.avatarUrl || null,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt || user.createdAt,
-    isActive: user.isActive,
-    verified: user.verified
-  });
+    res.json({
+      username: user.email,
+      email: user.email,
+      fullName: user.display_name,
+      avatarUrl: null,
+      createdAt: user.created_at,
+      updatedAt: user.updated_at || user.created_at,
+      isActive: user.is_active,
+      verified: user.is_active
+    });
+  } catch (error) {
+    console.error('Profile fetch error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // Update Profile
 app.put('/api/auth/profile', authenticateToken, async (req, res) => {
   try {
     const { fullName, email, currentPassword, newPassword } = req.body;
-    const user = users.get(req.user.username);
+    
+    const result = await pool.query(
+      'SELECT * FROM core.users WHERE email = $1',
+      [req.user.username]
+    );
+    
+    const user = result.rows[0];
     if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const updates = [];
+    const values = [];
+    let paramCount = 1;
 
     if (newPassword) {
       if (!currentPassword) return res.status(400).json({ error: 'Current password required to change password' });
-      if (!await bcrypt.compare(currentPassword, user.password)) return res.status(401).json({ error: 'Current password is incorrect' });
+      if (!await bcrypt.compare(currentPassword, user.password_hash)) {
+        return res.status(401).json({ error: 'Current password is incorrect' });
+      }
       if (newPassword.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
-      user.password = await bcrypt.hash(newPassword, 12);
+      
+      const hashedPassword = await bcrypt.hash(newPassword, 12);
+      updates.push(`password_hash = $${paramCount}`);
+      values.push(hashedPassword);
+      paramCount++;
+      
       logActivity(req.user.username, 'PASSWORD_CHANGED');
     }
 
-    if (fullName && fullName !== user.fullName) user.fullName = fullName;
-    if (email && email !== user.email) user.email = email;
+    if (fullName && fullName !== user.display_name) {
+      updates.push(`display_name = $${paramCount}`);
+      values.push(fullName);
+      paramCount++;
+    }
     
-    user.updatedAt = new Date().toISOString();
-    users.set(user.username, user);
+    if (email && email !== user.email) {
+      updates.push(`email = $${paramCount}`);
+      values.push(email);
+      paramCount++;
+    }
 
-    res.json({ message: 'Profile updated successfully', user });
+    if (updates.length > 0) {
+      updates.push(`updated_at = NOW()`);
+      values.push(user.id);
+      
+      const query = `UPDATE core.users SET ${updates.join(', ')} WHERE id = $${paramCount} RETURNING *`;
+      const updateResult = await pool.query(query, values);
+      
+      res.json({ message: 'Profile updated successfully', user: updateResult.rows[0] });
+    } else {
+      res.json({ message: 'No changes made', user });
+    }
   } catch (error) {
     console.error('Profile update error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -425,15 +514,23 @@ app.put('/api/auth/profile', authenticateToken, async (req, res) => {
 });
 
 // Update Avatar
-app.post('/api/auth/avatar', authenticateToken, (req, res) => {
-  const user = users.get(req.user.username);
-  if (!user) return res.status(404).json({ error: 'User not found' });
+app.post('/api/auth/avatar', authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'UPDATE core.users SET updated_at = NOW() WHERE email = $1 RETURNING email',
+      [req.user.username]
+    );
+    
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-  user.avatarUrl = req.body.avatarUrl;
-  user.updatedAt = new Date().toISOString();
-  logActivity(user.username, 'AVATAR_UPDATED');
+    logActivity(req.user.username, 'AVATAR_UPDATED');
 
-  res.json({ message: 'Avatar updated successfully', avatarUrl: user.avatarUrl });
+    res.json({ message: 'Avatar updated successfully', avatarUrl: req.body.avatarUrl });
+  } catch (error) {
+    console.error('Avatar update error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // Forgot Password 
@@ -445,30 +542,24 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       return res.status(400).json({ error: 'Email required' });
     }
 
-  
-    let user = null;
-    for (const [, u] of users) {
-      if (u.email === email) {
-        user = u;
-        break;
-      }
-    }
+    const result = await pool.query(
+      'SELECT email, display_name FROM core.users WHERE email = $1',
+      [email]
+    );
 
-  
-    if (!user) {
+    if (result.rows.length === 0) {
       return res.json({ message: 'If the email exists, a password reset link has been sent.' });
     }
 
-   
+    const user = result.rows[0];
     const resetToken = crypto.randomBytes(32).toString('hex');
     resetTokens.set(resetToken, {
-      username: user.username,
+      username: user.email,
       expiresAt: Date.now() + 60 * 60 * 1000 
     });
 
-    
-    await sendPasswordResetEmail(email, user.username, resetToken);
-    logActivity(user.username, 'PASSWORD_RESET_REQUESTED');
+    await sendPasswordResetEmail(email, user.display_name, resetToken);
+    logActivity(user.email, 'PASSWORD_RESET_REQUESTED');
 
     res.json({ message: 'Password reset link sent! Please check your email.' });
   } catch (error) {
@@ -501,21 +592,20 @@ app.post('/api/auth/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'Reset token has expired' });
     }
 
-    const user = users.get(tokenData.username);
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
     
-    if (!user) {
+    const result = await pool.query(
+      'UPDATE core.users SET password_hash = $1, updated_at = NOW() WHERE email = $2 RETURNING email',
+      [hashedPassword, tokenData.username]
+    );
+    
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-  
-    user.password = await bcrypt.hash(newPassword, 12);
-    user.updatedAt = new Date().toISOString();
-    users.set(user.username, user);
-    
- 
     resetTokens.delete(token);
     
-    logActivity(user.username, 'PASSWORD_RESET_COMPLETED');
+    logActivity(tokenData.username, 'PASSWORD_RESET_COMPLETED');
 
     res.json({ message: 'Password reset successful! You can now log in with your new password.' });
   } catch (error) {
@@ -530,15 +620,115 @@ app.get('/api/auth/activity-logs', authenticateToken, (req, res) => {
   res.json({ totalLogs: logs.length, logs: logs.slice(-20).reverse() });
 });
 
+// Export User Data (JSON/CSV/XML)
+app.get('/api/auth/export', authenticateToken, async (req, res) => {
+  try {
+    const { format = 'json' } = req.query;
+    
+    const result = await pool.query(
+      'SELECT id, email, display_name, is_active, created_at, updated_at FROM core.users WHERE email = $1',
+      [req.user.username]
+    );
+    
+    const user = result.rows[0];
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const exportData = {
+      username: user.email,
+      email: user.email,
+      fullName: user.display_name || '',
+      isActive: user.is_active,
+      verified: user.is_active,
+      createdAt: user.created_at,
+      updatedAt: user.updated_at || user.created_at,
+      verifiedAt: user.updated_at || null,
+      avatarUrl: null
+    };
+
+    logActivity(req.user.username, 'DATA_EXPORTED', { format });
+
+    switch (format.toLowerCase()) {
+      case 'json':
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="user_data_${user.email}_${Date.now()}.json"`);
+        return res.json({ user: exportData });
+
+      case 'csv':
+        // Excel-friendly CSV format with proper escaping
+        const escapeCSV = (value) => {
+          if (value === null || value === undefined) return '';
+          const stringValue = String(value);
+          if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+            return `"${stringValue.replace(/"/g, '""')}"`;
+          }
+          return stringValue;
+        };
+
+        const headers = ['Username', 'Email', 'Full Name', 'Active Status', 'Email Verified', 'Account Created', 'Last Updated', 'Email Verified Date', 'Avatar URL'];
+        
+        const row = [
+          escapeCSV(exportData.username),
+          escapeCSV(exportData.email),
+          escapeCSV(exportData.fullName),
+          escapeCSV(exportData.isActive ? 'Active' : 'Inactive'),
+          escapeCSV(exportData.verified ? 'Yes' : 'No'),
+          escapeCSV(exportData.createdAt ? new Date(exportData.createdAt).toLocaleString() : ''),
+          escapeCSV(exportData.updatedAt ? new Date(exportData.updatedAt).toLocaleString() : ''),
+          escapeCSV(exportData.verifiedAt ? new Date(exportData.verifiedAt).toLocaleString() : 'Not verified'),
+          escapeCSV(exportData.avatarUrl || 'No avatar')
+        ];
+
+        const csvContent = headers.join(',') + '\n' + row.join(',');
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="user_data_${user.email}_${Date.now()}.csv"`);
+        return res.send(csvContent);
+
+      case 'xml':
+        const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<user>
+    <username>${exportData.username}</username>
+    <email>${exportData.email}</email>
+    <fullName>${exportData.fullName}</fullName>
+    <isActive>${exportData.isActive}</isActive>
+    <verified>${exportData.verified}</verified>
+    <createdAt>${exportData.createdAt}</createdAt>
+    <updatedAt>${exportData.updatedAt}</updatedAt>
+    <verifiedAt>${exportData.verifiedAt || ''}</verifiedAt>
+    <avatarUrl>${exportData.avatarUrl || ''}</avatarUrl>
+</user>`;
+        
+        res.setHeader('Content-Type', 'application/xml');
+        res.setHeader('Content-Disposition', `attachment; filename="user_data_${user.email}_${Date.now()}.xml"`);
+        return res.send(xmlContent);
+
+      default:
+        return res.status(400).json({ error: 'Invalid format. Use json, csv, or xml' });
+    }
+  } catch (error) {
+    console.error('Export error:', error);
+    res.status(500).json({ error: 'Server error during export' });
+  }
+});
+
 // Delete Account
 app.delete('/api/auth/account', authenticateToken, async (req, res) => {
   try {
     const { password, confirmation } = req.body;
-    const user = users.get(req.user.username);
+    
+    const result = await pool.query(
+      'SELECT * FROM core.users WHERE email = $1',
+      [req.user.username]
+    );
+    
+    const user = result.rows[0];
     
     if (!user) return res.status(404).json({ error: 'User not found' });
     
-    if (!await bcrypt.compare(password, user.password)) {
+    if (!await bcrypt.compare(password, user.password_hash)) {
       return res.status(401).json({ error: 'Incorrect password' });
     }
     
@@ -547,7 +737,8 @@ app.delete('/api/auth/account', authenticateToken, async (req, res) => {
     }
     
     logActivity(req.user.username, 'ACCOUNT_DELETED');
-    users.delete(req.user.username);
+    
+    await pool.query('DELETE FROM core.users WHERE id = $1', [user.id]);
     activityLogs.delete(req.user.username);
     
     res.json({ message: 'Account deleted successfully' });
@@ -563,4 +754,5 @@ app.delete('/api/auth/account', authenticateToken, async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Email configured: ${EMAIL_USER}`);
+  console.log(`Database: ${process.env.DB_NAME}@${process.env.DB_HOST}`);
 });
