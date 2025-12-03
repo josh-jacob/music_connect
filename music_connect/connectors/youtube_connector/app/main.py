@@ -2,18 +2,9 @@ from fastapi import FastAPI, Request
 from dotenv import load_dotenv
 load_dotenv()
 from fastapi.responses import RedirectResponse
-<<<<<<< HEAD:music_connect/connectors/youtube_connector/main.py
 from oauth_handler import get_flow, get_authenticated_service
 from token_storage import save_tokens
 from pydantic import BaseModel
-=======
-from app.oauth_handler import get_flow, get_authenticated_service
-from app.token_storage import save_tokens
-from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
-from googleapiclient.errors import HttpError
-from app.refresh_token import refresh_youtube_token
->>>>>>> youtube:music_connect/connectors/youtube_connector/app/main.py
 
 
 import os
@@ -274,11 +265,8 @@ def remove_track_from_playlist(playlist_id: str, videoId: str):
         "videoId": videoId
     }
 
-<<<<<<< HEAD:music_connect/connectors/youtube_connector/main.py
     from pydantic import BaseModel
 
-=======
->>>>>>> youtube:music_connect/connectors/youtube_connector/app/main.py
 class CreatePlaylistRequest(BaseModel):
     title: str
     description: str | None = ""
@@ -356,7 +344,3 @@ def get_user_info():
                                  .get("uploads")
     }
 
-<<<<<<< HEAD:music_connect/connectors/youtube_connector/main.py
-
-=======
->>>>>>> youtube:music_connect/connectors/youtube_connector/app/main.py
