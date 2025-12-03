@@ -7,46 +7,46 @@ interface SearchResults {
 }
 
 interface SpotifyTrack {
-    id: string,
-    name: string,
-    artist: string,
-    album: string,
-    albumCover: string,
-    uri: string,
     source: string,
+    title: string,
+    artist: string,
+    trackId: string,
+    thumbnail: string
 }
 
 interface YouTubeTrack {
-    id: string,
-    name: string,
-    channel: string,
-    albumCover: string,
     source: string,
+    title: string,
+    channel: string,
+    videoId: string,
+    thumbnail: string
 }
 
 interface Track {
-    id: string,
+    serviceId: string,
     name: string,
     channel: string | null,
     artist: string | null,
-    album: string | null,
-    albumCover: string,
     uri: string | null,
-    serviceId: string,
+    id: string,
+    albumCover: string,
 }
 
 interface SearchSlice {
     query: string,
     error: string,
     loading: boolean,
-    searchResults: SearchResults[],
+    searchResults: SearchResults,
 }
 
 const initialState: SearchSlice = {
     query: "",
     error: "",
     loading: false,
-    searchResults: [],
+    searchResults: {
+        tracks: [],
+        numTracks: 0
+    },
 };
 
 export const search = createAsyncThunk(
@@ -61,7 +61,7 @@ export const search = createAsyncThunk(
                 headers: headers
             };
             // Call to search all apps
-            const response = await fetch(`${SEARCH_SERVICE_URL}?q=${query}`, requestOptions);
+            const response = await fetch(`${SEARCH_SERVICE_URL}/search?q=${query}`, requestOptions);
 
             return await response.json();
         } catch (error) {
@@ -102,8 +102,37 @@ const SearchSlice = createSlice({
             })
             .addCase(search.fulfilled, (state, action) => {
                 state.loading = false;
-                console.log(action.payload);
-                state.searchResults = [];
+                state.searchResults.tracks = [];
+                const searchTracks = [];
+                const spotifyTracks = action.payload.spotify;
+                const youtubeTracks = action.payload.youtube;
+
+                for (let pos in spotifyTracks) {
+                    searchTracks.push({
+                        serviceId: spotifyTracks[pos].source,
+                        name: spotifyTracks[pos].title,
+                        channel: null,
+                        artist: spotifyTracks[pos].artist,
+                        uri: spotifyTracks[pos].trackId,
+                        id: null,
+                        albumCover: spotifyTracks[pos].thumbnail,
+                    });
+                }
+
+                for (let pos in youtubeTracks) {
+                    searchTracks.push({
+                        serviceId: youtubeTracks[pos].source,
+                        name: youtubeTracks[pos].title,
+                        channel: youtubeTracks[pos].channel,
+                        artist: null,
+                        uri: null,
+                        id: youtubeTracks[pos].videoId,
+                        albumCover: youtubeTracks[pos].thumbnail,
+                    });
+                }
+
+                state.searchResults.numTracks = action.payload.count;
+                state.searchResults.tracks = searchTracks;
             })
             .addCase(search.rejected, (state) => {
                 state.loading = false;

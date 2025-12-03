@@ -88,7 +88,6 @@ export const searchYouTubeMusic = createAsyncThunk(
     "YouTubeMusic/search",
     async (query) => {
         try {
-            console.log(query);
             const headers = new Headers();
 
             const requestOptions = {
