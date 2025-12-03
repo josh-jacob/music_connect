@@ -1,13 +1,7 @@
 {
-<<<<<<< HEAD
-    "access_token": "ya29.a0ATi6K2sqshloSaSlH4h7CDbegU6ey8dC3bRs5Yf5f2yNRllZV8az6wMiBdEdcv2cJiRcuayS6z5Hnen02J0h2a_BE4ScmVSjNKKdull9_s3GPzqf-48Du1sBodYDjzW3oBxFwyg3CZZiAvik0_52O35ti4DiKqUOQK2t1F7Ea54DZ3kCKglOQYMrAmrcy8SSUW8mTiYaCgYKAScSARYSFQHGX2Mi1mKmtM8GzyhvD6-xODF0Ug0206",
-    "refresh_token": "1//043isUQuEj9jUCgYIARAAGAQSNwF-L9IrIN-bnilM2phjAF1Wu0faAM71NaHBihao6BHAesgHq74xrEqYGKy2dm-rKpHbFOp7-wc",
-    "expires_at": "2025-12-02T21:09:05",
-=======
-    "access_token": "ya29.a0ATi6K2sGOklAlnCS78gvYmXAjzSC_C7EsxusOE-ea1jY0SwVOCBqCrUvlU5eItC4AUYpQembZcebz7jGYsHL7bRFqlPj7Q5Tbp7C5JzNnDRpsT5LYmIxqL6kCh3-n3twksA0eA6H7cMN3OMVvm36FpKXOOkPmrcGRV35qJxT5Z2FTejfTjFBVumxJBKeK8-pPKej50IaCgYKAUUSARYSFQHGX2MiDw8ktO8Kmm9k40vcS_h8dQ0206",
-    "refresh_token": "1//04IDMPcbYOLPoCgYIARAAGAQSNwF-L9IrFGJCw0Crp79p2CnWYGszgpaMpatqzNbFT-4Qh_SbjHzCyyAFqRCr_LpyvVewh5NF1S4",
-    "expires_at": "2025-12-01T19:46:44",
->>>>>>> main
+    "access_token": "ya29.a0ATi6K2t7ErADH_-53pj98Ue-D0cZb0YpARhFX67mBjseD2NYzri3RwHZapnYBmWU3LUpicLdyGB6Eou50kYFyOlMFalp0DtIwDfpAtZFgGoclJV9HkItAILClRv-g83z9a9UEVjtHItmQtgDtheF_WMeqiRjO7YRgdNLiKuQfrAmC-QG-eLFKph3CA81jU7_dNQRVggaCgYKAVsSARYSFQHGX2Mie3YpXflTPw8KUMdp1FRgIA0206",
+    "refresh_token": "1//05ljccSCcR2niCgYIARAAGAUSNwF-L9Ir2atDyDWVNKBQLXtc0jzJBONmocmeeIRtxDCP0t4saECeJcWRwEnOajQaBc93nT-nnaw",
+    "expires_at": "2025-12-03T10:34:01",
     "scopes": [
         "https://www.googleapis.com/auth/youtube.readonly"
     ]

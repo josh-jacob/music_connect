@@ -19,8 +19,4 @@ def get_flow():
     )
 
 def get_authenticated_service(credentials):
-<<<<<<< HEAD
     return build("youtube", "v3", credentials=credentials)
-=======
-    return build("youtube", "v3", credentials=credentials)
->>>>>>> main

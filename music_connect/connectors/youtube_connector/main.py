@@ -4,16 +4,12 @@ load_dotenv()
 from fastapi.responses import RedirectResponse
 from oauth_handler import get_flow, get_authenticated_service
 from token_storage import save_tokens
-<<<<<<< HEAD
 from pydantic import BaseModel
-=======
->>>>>>> main
 
 
 import os
 
 app = FastAPI()
-<<<<<<< HEAD
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -28,8 +24,6 @@ app.add_middleware(
     allow_headers=["*"],          # Allow all headers
 )
 
-=======
->>>>>>> main
 """
 Redirect user to Google's OAuth page.
 Requests offline access so we get a refresh token.
@@ -62,14 +56,16 @@ def youtube_callback(request: Request):
         "expires_at": credentials.expiry.isoformat(),
         "scopes": credentials.scopes
     }
-<<<<<<< HEAD
-=======
-
->>>>>>> main
     save_tokens(token_data)
 
-    return {"message": "YouTube connected and tokens saved!"}
+    ui_url = os.getenv("YOUTUBE_UI_REDIRECT_URL")
 
+    # If UI redirect is configured → redirect to UI
+    if ui_url:
+        return RedirectResponse(ui_url)
+
+    # Otherwise return JSON for easier local testing
+    return {"message": "YouTube connected and tokens saved!"}
 
 from refresh_token import refresh_youtube_token
 """
@@ -98,7 +94,6 @@ def get_playlist_items(playlist_id: str):
         ).execute()
 
         for item in response["items"]:
-<<<<<<< HEAD
             snippet = item["snippet"]
 
             items.append({
@@ -110,14 +105,6 @@ def get_playlist_items(playlist_id: str):
             })
 
 
-=======
-            items.append({
-                "title": item["snippet"]["title"],
-                "videoId": item["contentDetails"]["videoId"],
-                "thumbnail": item["snippet"]["thumbnails"]["default"]["url"]
-            })
-
->>>>>>> main
         next_page_token = response.get("nextPageToken")
         if not next_page_token:
             break
@@ -262,9 +249,6 @@ def remove_track_from_playlist(playlist_id: str, videoId: str):
         "videoId": videoId
     }
 
-<<<<<<< HEAD
-    from pydantic import BaseModel
-
 class CreatePlaylistRequest(BaseModel):
     title: str
     description: str | None = ""
@@ -335,5 +319,3 @@ def get_user_info():
     }
 
 
-=======
->>>>>>> main
