@@ -344,4 +344,3 @@ def get_user_info():
                                  .get("relatedPlaylists", {})
                                  .get("uploads")
     }
-
