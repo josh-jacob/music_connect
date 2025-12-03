@@ -129,7 +129,7 @@ export const fetchYouTubePlaylists = createAsyncThunk(
 
 export const fetchYouTubePlaylistTracks = createAsyncThunk(
     "YouTubeMusic/fetchPlaylistTracks",
-    async (playlistId) => {
+    async (playlistId: string) => {
         try {
             const headers = new Headers();
             const requestOptions = {
@@ -225,10 +225,10 @@ const YouTubeMusicSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(loginToYouTubeMusic.fulfilled, (state, action) => {
+            .addCase(loginToYouTubeMusic.fulfilled, (state) => {
                 state.loading = false;
             })
-            .addCase(loginToYouTubeMusic.rejected, (state, action) => {
+            .addCase(loginToYouTubeMusic.rejected, (state) => {
                 state.loading = false;
                 state.error = "An error occurred";
             })
@@ -246,7 +246,7 @@ const YouTubeMusicSlice = createSlice({
                     };
                 }
             })
-            .addCase(fetchYouTubeUser.rejected, (state, action) => {
+            .addCase(fetchYouTubeUser.rejected, (state) => {
                 state.loading = false;
                 state.error = "An error occurred";
             })
@@ -272,7 +272,7 @@ const YouTubeMusicSlice = createSlice({
                 }
                 state.searchResults = trackResults;
             })
-            .addCase(searchYouTubeMusic.rejected, (state, action) => {
+            .addCase(searchYouTubeMusic.rejected, (state) => {
                 state.loading = false;
                 state.error = "An error occurred";
             })
@@ -300,7 +300,7 @@ const YouTubeMusicSlice = createSlice({
                     }
                 }
             })
-            .addCase(fetchYouTubePlaylists.rejected, (state, action) => {
+            .addCase(fetchYouTubePlaylists.rejected, (state) => {
                 state.loading = false;
                 state.error = "An error occurred";
             })
@@ -323,7 +323,7 @@ const YouTubeMusicSlice = createSlice({
                     }
                 }
             })
-            .addCase(fetchYouTubePlaylistTracks.rejected, (state, action) => {
+            .addCase(fetchYouTubePlaylistTracks.rejected, (state) => {
                 state.loading = false;
                 state.error = "An error occurred";
             })
@@ -331,10 +331,10 @@ const YouTubeMusicSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(createYouTubePlaylist.fulfilled, (state, action) => {
+            .addCase(createYouTubePlaylist.fulfilled, (state) => {
                 state.loading = false;
             })
-            .addCase(createYouTubePlaylist.rejected, (state, action) => {
+            .addCase(createYouTubePlaylist.rejected, (state) => {
                 state.loading = false;
                 state.error = "An error occurred";
             })
@@ -342,10 +342,10 @@ const YouTubeMusicSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(addYouTubeTrackToPlaylist.fulfilled, (state, action) => {
+            .addCase(addYouTubeTrackToPlaylist.fulfilled, (state) => {
                 state.loading = false;
             })
-            .addCase(addYouTubeTrackToPlaylist.rejected, (state, action) => {
+            .addCase(addYouTubeTrackToPlaylist.rejected, (state) => {
                 state.loading = false;
                 state.error = "An error occurred";
             })
@@ -353,10 +353,10 @@ const YouTubeMusicSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(removeYouTubeTrackFromPlaylist.fulfilled, (state, action) => {
+            .addCase(removeYouTubeTrackFromPlaylist.fulfilled, (state) => {
                 state.loading = false;
             })
-            .addCase(removeYouTubeTrackFromPlaylist.rejected, (state, action) => {
+            .addCase(removeYouTubeTrackFromPlaylist.rejected, (state) => {
                 state.loading = false;
                 state.error = "An error occurred";
             });
