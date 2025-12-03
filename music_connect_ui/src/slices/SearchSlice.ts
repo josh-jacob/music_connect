@@ -25,8 +25,9 @@ const initialState: SearchSlice = {
 
 export const search = createAsyncThunk(
     "search",
-    async () => {
+    async (params: {userId: string, query: string}) => {
         try {
+            const {userId, query} = params;
             // Call to search all apps
             const response = await fetch(`${}`);
 
