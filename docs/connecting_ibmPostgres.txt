@@ -1,0 +1,98 @@
+# Connecting to the shared IBM Cloud PostgreSQL (public endpoint)
+
+We have a managed PostgreSQL instance on IBM Cloud (Databases for PostgreSQL).
+- Multiple schemas: `core`, `providers`, `search`, `migrations`, `exports`, `trends`
+- The initial schema is defined in `docs/musicconnect_schema.sql`
+
+You can connect from your laptop using the **public endpoint** for:
+- quick checks, shared dev data, debugging
+
+For heavy development, please still use your **local Postgres** (Docker) to avoid hammering the shared instance.
+
+All services connect to Postgres using **environment variables**:
+
+```bash
+MC_PG_HOST        # hostname
+MC_PG_PORT        # port
+MC_PG_DB          # database name
+MC_PG_USER        # database user
+MC_PG_PASSWORD    # database password
+MC_PG_SSLMODE     # 'disable' (local) or 'require' (IBM Cloud)
+
+---
+
+#Creating a Local Docker instance
+
+## Start a local Postgres container
+
+Run this once to create Postgres container 
+
+docker run --name mc-postgres-dev \
+  -e POSTGRES_USER=musiconnect_app \
+  -e POSTGRES_PASSWORD=mc_password \
+  -e POSTGRES_DB=musicconnect \
+  -p 5432:5432 \
+  -d postgres:17
+
+Local Environmental Variables (add to .env)
+MC_PG_HOST=host.docker.internal
+MC_PG_PORT=5432
+MC_PG_DB=musicconnect
+MC_PG_USER=musiconnect_app
+MC_PG_PASSWORD=mc_password
+MC_PG_SSLMODE=disable
+
+## Load the shared schema
+
+Make sure you have docs/musicconnect_pgdb_schema_v2.sql (from cloudSetup Branch)
+In terminal:
+
+# Copys the schema into the container
+docker cp docs/musiconnect_pgdb_schema_v2.sql mc-postgres-dev:/musiconnect_schema.sql
+
+# Executes the SQL in the container
+docker exec -it mc-postgres-dev \
+  psql -U musiconnect_app -d musicconnect -f /musiconnect_schema.sql
+
+
+---
+
+# Connect with a GUI (TablePlus, DBeaver, etc.)
+
+Example (TablePlus):
+
+- **Host**: `<localhost>`  
+- **Port**: `<port>`  
+- **Database**: `musicconnect` (or whatever you created)  
+- **User**: `<db-username>`  
+- **Password**: `<db-password>`  
+- **SSL**: enable TLS, and if asked, use `sslmode=required`.
+
+You should now see schemas: `core`, `providers`, `search`, `migrations`, `exports`, `trends`.
+
+---
+
+# Example in Code Node.js
+
+import { Pool } from "pg";
+
+const pool = new Pool({
+  host: process.env.MC_PG_HOST,
+  port: Number(process.env.MC_PG_PORT || 5432),
+  database: process.env.MC_PG_DB,
+  user: process.env.MC_PG_USER,
+  password: process.env.MC_PG_PASSWORD,
+  ssl: process.env.MC_PG_SSLMODE === "require"
+    ? { rejectUnauthorized: false }
+    : false,
+});
+
+// Simple test query
+async function testDb() {
+  const result = await pool.query("SELECT NOW()");
+  console.log("DB time:", result.rows[0]);
+}
+
+testDb().catch(console.error);
+
+---
