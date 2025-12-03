@@ -5,10 +5,6 @@ interface Search {
     page: number,
 }
 
-interface SearchRequest {
-    query: string,
-}
-
 interface SearchResponse {
     results: Search[]
 }
@@ -32,7 +28,21 @@ export const search = createAsyncThunk(
     async () => {
         try {
             // Call to search all apps
-            const response = await fetch("");
+            const response = await fetch(`${}`);
+
+            return await response.json();
+        } catch (error) {
+            throw (error.message);
+        }
+    }
+);
+
+export const addTrackToPlaylist = createAsyncThunk(
+    "search/addTrackToPlaylist",
+    async () => {
+        try {
+            // Call to search all apps
+            const response = await fetch(`${}/playlist/add`);
 
             return await response.json();
         } catch (error) {
@@ -55,7 +65,19 @@ const SearchSlice = createSlice({
                 state.loading = false;
                 state.results = action.payload;
             })
-            .addCase(search.rejected, (state, action) => {
+            .addCase(search.rejected, (state) => {
+                state.loading = false;
+                state.error = "An error occurred";
+            })
+            .addCase(addTrackToPlaylist.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(addTrackToPlaylist.fulfilled, (state, action) => {
+                state.loading = false;
+                state.results = action.payload;
+            })
+            .addCase(addTrackToPlaylist.rejected, (state) => {
                 state.loading = false;
                 state.error = "An error occurred";
             });
