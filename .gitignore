@@ -13,7 +13,6 @@ Dockerfile.ibmcloud
 # Logs and temp files
 *.log
 *.tmp
-docs/connecting_ibmPostgres.txt
 
 # Python cache
 __pycache__/
