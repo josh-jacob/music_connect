@@ -1,0 +1,19 @@
+.password-entry {
+    display: flex;
+    padding: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-label {
+    padding-right: 10px;
+}
+
+.delete-message {
+    color: red;
+    font-weight: bold;
+}
+
+.error-message {
+    color: red;
+}

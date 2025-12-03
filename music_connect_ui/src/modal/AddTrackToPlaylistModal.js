@@ -32,11 +32,15 @@ const AddTrackToPlaylistModal = ({open, onClose, onSubmit}) => {
                     <Select
                         native
                         value={playlistId}
+                        defaultValue={null}
                         onChange={e => setPlaylistId(e.target.value)}
                         label="Native"
                         variant={'outlined'}
                         sx={{ width: '300px' }}
                     >
+                        <option key={""} value={""}>
+                            Select Playlist
+                        </option>
                         {selectSpotifyPlaylists.map((playlist) => (
                             <option key={playlist.id} value={playlist.id}>
                                 {playlist.name}
@@ -47,7 +51,7 @@ const AddTrackToPlaylistModal = ({open, onClose, onSubmit}) => {
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose}>Cancel</Button>
-                <Button onClick={onCreate} autoFocus>
+                <Button onClick={onCreate} autoFocus disabled={!playlistId}>
                     Add
                 </Button>
             </DialogActions>

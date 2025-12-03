@@ -4,7 +4,7 @@ from app.config import settings
 class SpotifyClient:
     @staticmethod
     def search(query: str, user_id: str):
-        url = f"{settings.spotify_base_url}/music/search"
+        url = f"{settings.SPOTIFY_CONNECTOR_URL}/music/search"
         headers = {"X-User-Id": user_id}
         params = {"q": query}
 
@@ -12,12 +12,11 @@ class SpotifyClient:
             resp = requests.get(url, headers=headers, params=params)
             resp.raise_for_status()
             raw = resp.json()
-        except Exception as e:
+        except Exception:
             return []
 
-        # NORMALIZE RESULTS
         results = []
-        for item in raw.get("tracks", []):
+        for item in raw:
             results.append({
                 "source": "spotify",
                 "title": item["name"],

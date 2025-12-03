@@ -1,0 +1,11 @@
+.verify-email-page {
+    align-items: center;
+    justify-content: center;
+
+    .email-verified {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+    }
+}

@@ -1,24 +1,22 @@
-from fastapi import APIRouter, Query, Depends
+from fastapi import APIRouter, Query, Header
 from app.services.spotify_client import SpotifyClient
 from app.services.youtube_client import YouTubeClient
-from app.dependencies import get_user_id
 
-router = APIRouter(prefix="/search", tags=["Unified Search"])
+router = APIRouter(prefix="/search", tags=["search"])
 
 @router.get("/")
 def unified_search(
     q: str = Query(...),
-    user_id: str = Depends(get_user_id)
+    x_user_id: str = Header(None, alias="X-User-Id")
 ):
-    spotify = SpotifyClient.search(q, user_id)
-    youtube = YouTubeClient.search(q)
+    if not x_user_id:
+        return {"error": "Missing X-User-Id header"}
 
-    total = len(spotify) + len(youtube)
+    spotify_results = SpotifyClient.search(q, x_user_id)
+    youtube_results = YouTubeClient.search(q)
 
     return {
-        "query": q,
-        "total_results": total,
-        "spotify_count": len(spotify),
-        "youtube_count": len(youtube),
-        "results": spotify + youtube  # MERGED LIST
+        "spotify": spotify_results,
+        "youtube": youtube_results,
+        "count": len(spotify_results) + len(youtube_results)
     }
