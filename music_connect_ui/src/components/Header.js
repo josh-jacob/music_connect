@@ -36,6 +36,7 @@ const Header = () => {
         }
         if (!user.token && loggedOut) {
             localStorage.removeItem("accessToken");
+            localStorage.removeItem("username");
             navigate("/login");
         }
     }, [loggedOut, accountDeleted])

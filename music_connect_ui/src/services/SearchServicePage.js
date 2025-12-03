@@ -5,6 +5,7 @@ import {Button, CircularProgress} from "@mui/material";
 import {useNavigate, useSearchParams} from "react-router";
 import {useEffect, useState} from "react";
 import {searchSpotify} from "../slices/SpotifySlice.ts";
+import {searchYouTubeMusic} from "../slices/YouTubeMusicSlice.ts";
 import {useDispatch, useSelector} from "react-redux";
 import SearchResult from "../components/SearchResult";
 
@@ -18,6 +19,9 @@ const SearchServicePage = () => {
 
     const spotifySearchResults = useSelector((state) => state.spotify.searchResults);
     const spotifySearchResultsLoading = useSelector((state) => state.spotify.loading);
+    const youTubeMusicSearchResults = useSelector((state) => state.youtubeMusic.searchResults);
+    const youTubeMusicSearchResultsLoading = useSelector((state) => state.youtubeMusic.loading);
+    const username = localStorage.getItem("username");
 
     const serviceId = searchParams.get("sid");
     const searchQuery = searchParams.get("q") || "";
@@ -51,16 +55,28 @@ const SearchServicePage = () => {
             setResultCount(spotifySearchResults.length);
         }
         else { //YouTube Music
-            //TODO
+            setSearchResults(youTubeMusicSearchResults);
+            setSearchResultsLoading(youTubeMusicSearchResultsLoading);
+            setResultCount(youTubeMusicSearchResults.length);
         }
-    }, [searchQuery, spotifySearchResults]);
+    }, [searchQuery, spotifySearchResults, youTubeMusicSearchResults]);
 
     useEffect(() => {
-        searchSpotifyService();
-    }, [searchQuery]);
+        if (serviceId === "YouTube Music") {
+            searchYouTubeService();
+        }
+        else {
+            searchSpotifyService();
+        }
+    }, []);
 
     const searchSpotifyService = async () => {
-        await dispatch(searchSpotify({ userId: 'user123', query: searchQuery}));
+        await dispatch(searchSpotify({ userId: username, query: searchQuery}));
+    }
+
+    const searchYouTubeService = async () => {
+        console.log("searching youtube")
+        await dispatch(searchYouTubeMusic(searchQuery));
     }
 
     return (
@@ -78,7 +94,7 @@ const SearchServicePage = () => {
                     <CircularProgress className={"loading-spinner"} sx={{ alignSelf: "center" }}/>
                 </div> : null}
                 {!searchResultsLoading ? searchResults.map((result) => (
-                        <SearchResult name={result.name} artist={result.artist} album={result.album} uri={result.uri} image={result.albumCover} />
+                        <SearchResult name={result.name} artist={result.artist ?? result.channel} album={result.album} uri={result.uri ?? result.id} image={result.albumCover} serviceId={result.serviceId}/>
                     )) : null }
             </div>
         </div>
