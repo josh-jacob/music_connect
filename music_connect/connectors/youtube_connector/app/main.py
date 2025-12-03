@@ -2,16 +2,18 @@ from fastapi import FastAPI, Request
 from dotenv import load_dotenv
 load_dotenv()
 from fastapi.responses import RedirectResponse
-from oauth_handler import get_flow, get_authenticated_service
-from token_storage import save_tokens
+from app.oauth_handler import get_flow, get_authenticated_service
+from app.token_storage import save_tokens
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+from googleapiclient.errors import HttpError
+from app.refresh_token import refresh_youtube_token
 
 
 import os
 
 app = FastAPI()
 
-from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
@@ -67,7 +69,6 @@ def youtube_callback(request: Request):
     # Otherwise return JSON for easier local testing
     return {"message": "YouTube connected and tokens saved!"}
 
-from refresh_token import refresh_youtube_token
 """
 Returns all items/videos inside a specific playlist.
 Automatically refreshes token if expired.
@@ -115,7 +116,6 @@ def get_playlist_items(playlist_id: str):
 Returns all playlists owned by the authenticated user.
 Useful for UI playlist selection and migration features.
 """
-from googleapiclient.errors import HttpError
 
 @app.get("/youtube/playlists")
 def get_user_playlists():
