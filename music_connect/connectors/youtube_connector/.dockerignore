@@ -1,0 +1,14 @@
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.log
+
+# Local secrets — NEVER bake into image
+youtube_oauth_credentials.json
+.env
+
+# Editor & VCS junk
+.git
+.gitignore
+.vscode
