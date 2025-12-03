@@ -6,6 +6,24 @@ interface SearchResults {
     numTracks: number
 }
 
+interface SpotifyTrack {
+    id: string,
+    name: string,
+    artist: string,
+    album: string,
+    albumCover: string,
+    uri: string,
+    source: string,
+}
+
+interface YouTubeTrack {
+    id: string,
+    name: string,
+    channel: string,
+    albumCover: string,
+    source: string,
+}
+
 interface Track {
     id: string,
     name: string,
@@ -38,9 +56,12 @@ export const search = createAsyncThunk(
             const {userId, query} = params;
             const headers = new Headers();
             headers.set('X-User-Id', userId);
+            const requestOptions = {
+                method: 'GET',
+                headers: headers
+            };
             // Call to search all apps
-            console.log("seaching...")
-            const response = await fetch(`${SEARCH_SERVICE_URL}?q=${query}`, {});
+            const response = await fetch(`${SEARCH_SERVICE_URL}?q=${query}`, requestOptions);
 
             return await response.json();
         } catch (error) {
@@ -51,10 +72,16 @@ export const search = createAsyncThunk(
 
 export const addTrackToPlaylist = createAsyncThunk(
     "search/addTrackToPlaylist",
-    async () => {
+    async (track: SpotifyTrack | YouTubeTrack) => {
         try {
-            // Call to search all apps
-            const response = await fetch(`${SEARCH_SERVICE_URL}/playlist/add`);
+            const headers = new Headers();
+            const requestOptions = {
+                method: 'GET',
+                headers: headers,
+                body: JSON.stringify(track),
+            };
+            // Call to add track to playlist
+            const response = await fetch(`${SEARCH_SERVICE_URL}/playlist/add`, requestOptions);
 
             return await response.json();
         } catch (error) {
@@ -76,7 +103,7 @@ const SearchSlice = createSlice({
             .addCase(search.fulfilled, (state, action) => {
                 state.loading = false;
                 console.log(action.payload);
-                state.searchResults = action.payload;
+                state.searchResults = [];
             })
             .addCase(search.rejected, (state) => {
                 state.loading = false;
