@@ -80,3 +80,18 @@ def get_playlist_tracks(
 @router.put("/playlist/{playlist_id}/follow")
 def follow_playlist(playlist_id: str, user_id: str = Depends(get_user_id)):
     return SpotifyService(user_id).follow_playlist(playlist_id)
+
+
+@router.get("/email")
+def get_email(user_id: str = Depends(get_user_id)):
+    """
+    Returns the authenticated user's Spotify email address.
+    """
+    svc = SpotifyService(user_id)
+    profile = svc.get_user_profile()
+
+    email = profile.get("email")
+    if not email:
+        raise HTTPException(404, "Email not available. Make sure scope includes user-read-email.")
+    
+    return {"email": email}

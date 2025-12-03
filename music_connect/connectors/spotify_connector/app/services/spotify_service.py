@@ -6,7 +6,7 @@ import requests
 from fastapi import HTTPException
 
 from app.config import settings
-from app.storage import token_manager
+from app.storage.token_manager import token_manager
 from app.interfaces.music_service_interface import MusicServiceInterface
 from app.utils.logger import get_logger
 
@@ -29,7 +29,7 @@ class SpotifyService(MusicServiceInterface):
 
         state = uuid.uuid4().hex
 
-        # ⭐ CORRECT NAME — must match TokenManager
+        # ⭐ MUST match TokenManager state system
         token_manager.set_state(state, user_id)
 
         params = {
@@ -50,7 +50,6 @@ class SpotifyService(MusicServiceInterface):
     # ----------------------------------------------------
     @classmethod
     def handle_auth_callback(cls, code: str, state: str):
-        # ⭐ CORRECT — pop the state, get user_id
         user_id = token_manager.pop_state(state)
         if not user_id:
             raise HTTPException(400, "Invalid or expired state")
@@ -87,11 +86,36 @@ class SpotifyService(MusicServiceInterface):
     #  INTERNAL HELPERS
     # ----------------------------------------------------
 
+    def _request_with_backoff(self, method, url, headers=None, params=None, json=None, retries=3):
+        """
+        Internal wrapper for all Spotify API calls.
+        Adds exponential backoff and 429 rate-limit handling.
+        QR1 compliant.
+        """
+        for attempt in range(retries):
+            r = requests.request(method, url, headers=headers, params=params, json=json)
+
+            # Handle 429 Rate Limit → Retry-After header
+            if r.status_code == 429:
+                retry_after = int(r.headers.get("Retry-After", "1"))
+                time.sleep(retry_after)
+                continue
+
+            # Handle transient 5xx errors
+            if r.status_code >= 500 and attempt < retries - 1:
+                time.sleep(2 ** attempt)
+                continue
+
+            return r
+
+        return r
+
     def _ensure_token(self):
         tokens = token_manager.get_tokens(self.user_id)
         if not tokens:
             raise HTTPException(401, "Authenticate with /auth/login first")
 
+        # Auto-refresh logic (FR1.2)
         if tokens["expires_at"] < time.time():
             return self._refresh()
 
@@ -100,6 +124,9 @@ class SpotifyService(MusicServiceInterface):
     def _refresh(self):
         tokens = token_manager.get_tokens(self.user_id)
         refresh_token = tokens.get("refresh_token")
+
+        if not refresh_token:
+            raise HTTPException(401, "Refresh token missing — re-authentication required")
 
         client_creds = f"{settings.SPOTIFY_CLIENT_ID}:{settings.SPOTIFY_CLIENT_SECRET}"
         b64 = base64.b64encode(client_creds.encode()).decode()
@@ -111,12 +138,16 @@ class SpotifyService(MusicServiceInterface):
         )
 
         if resp.status_code != 200:
-            raise HTTPException(resp.status_code, resp.text)
+            raise HTTPException(401, "Session expired — please re-authenticate")
 
         payload = resp.json()
 
         tokens["access_token"] = payload["access_token"]
         tokens["expires_at"] = int(time.time()) + payload["expires_in"]
+
+        # Spotify sometimes sends a new refresh token
+        if payload.get("refresh_token"):
+            tokens["refresh_token"] = payload["refresh_token"]
 
         token_manager.store_tokens(self.user_id, tokens)
 
@@ -127,15 +158,16 @@ class SpotifyService(MusicServiceInterface):
         return {"Authorization": f"Bearer {token}"}
 
     # ----------------------------------------------------
-    #  SPOTIFY API WRAPPERS
+    #  SPOTIFY API WRAPPERS (BACKWARD COMPATIBLE)
     # ----------------------------------------------------
 
     def get_user_profile(self):
-        r = requests.get(f"{API_BASE}/me", headers=self._headers())
+        r = self._request_with_backoff("GET", f"{API_BASE}/me", headers=self._headers())
         return r.json()
 
     def get_playlists(self, limit=20, offset=0):
-        r = requests.get(
+        r = self._request_with_backoff(
+            "GET",
             f"{API_BASE}/me/playlists",
             headers=self._headers(),
             params={"limit": limit, "offset": offset},
@@ -143,7 +175,8 @@ class SpotifyService(MusicServiceInterface):
         return r.json()
 
     def get_saved_tracks(self, limit=20, offset=0):
-        r = requests.get(
+        r = self._request_with_backoff(
+            "GET",
             f"{API_BASE}/me/tracks",
             headers=self._headers(),
             params={"limit": limit, "offset": offset},
@@ -152,7 +185,8 @@ class SpotifyService(MusicServiceInterface):
 
     def create_playlist(self, name, description, public):
         user = self.get_user_profile()
-        r = requests.post(
+        r = self._request_with_backoff(
+            "POST",
             f"{API_BASE}/users/{user['id']}/playlists",
             headers=self._headers(),
             json={"name": name, "description": description, "public": public},
@@ -160,7 +194,8 @@ class SpotifyService(MusicServiceInterface):
         return r.json()
 
     def add_tracks_to_playlist(self, playlist_id, uris: List[str]):
-        r = requests.post(
+        r = self._request_with_backoff(
+            "POST",
             f"{API_BASE}/playlists/{playlist_id}/tracks",
             headers=self._headers(),
             json={"uris": uris},
@@ -168,7 +203,8 @@ class SpotifyService(MusicServiceInterface):
         return r.json()
 
     def remove_tracks_from_playlist(self, playlist_id, uris: List[str]):
-        r = requests.delete(
+        r = self._request_with_backoff(
+            "DELETE",
             f"{API_BASE}/playlists/{playlist_id}/tracks",
             headers=self._headers(),
             json={"tracks": [{"uri": u} for u in uris]},
@@ -176,7 +212,8 @@ class SpotifyService(MusicServiceInterface):
         return r.json()
 
     def reorder_playlist_tracks(self, playlist_id, range_start, insert_before, range_length):
-        r = requests.put(
+        r = self._request_with_backoff(
+            "PUT",
             f"{API_BASE}/playlists/{playlist_id}/tracks",
             headers=self._headers(),
             json={
@@ -193,7 +230,13 @@ class SpotifyService(MusicServiceInterface):
         params = {"limit": 100, "offset": 0}
 
         while True:
-            r = requests.get(url, headers=self._headers(), params=params)
+            r = self._request_with_backoff(
+                "GET",
+                url,
+                headers=self._headers(),
+                params=params,
+            )
+
             if r.status_code != 200:
                 raise HTTPException(r.status_code, r.text)
 
@@ -202,16 +245,15 @@ class SpotifyService(MusicServiceInterface):
 
             if data.get("next") is None:
                 break
-            
+
             params["offset"] += 100
 
         return {"total": len(all_items), "items": all_items}
-    
+
     def follow_playlist(self, playlist_id: str):
-        r = requests.put(
+        r = self._request_with_backoff(
+            "PUT",
             f"{API_BASE}/playlists/{playlist_id}/followers",
             headers=self._headers()
         )
         return {"status": r.status_code, "detail": r.text}
-
-
