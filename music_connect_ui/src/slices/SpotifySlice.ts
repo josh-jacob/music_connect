@@ -62,7 +62,6 @@ export const loginToSpotify = createAsyncThunk(
     "spotify/login",
     async (userId: string) => {
         try {
-            console.log(userId);
             const headers = new Headers();
             headers.set('X-User-Id', userId);
             const requestOptions = {

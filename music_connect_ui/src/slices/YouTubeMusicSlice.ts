@@ -313,7 +313,6 @@ const YouTubeMusicSlice = createSlice({
                 const playlists = state.playlists;
                 for (let pos in playlists) {
                     if (playlists[pos].id === action.payload.playlistId) {
-                        console.log(action.payload);
                         playlists[pos].tracks = action.payload.result.map((track) => ({
                             id: track.videoId,
                             name: track.title,

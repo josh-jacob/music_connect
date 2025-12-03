@@ -1,27 +1,34 @@
 import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
 import {SEARCH_SERVICE_URL} from "../config.js";
 
-interface Search {
-    query: string,
-    page: number,
+interface SearchResults {
+    tracks: Track[],
+    numTracks: number
 }
 
-interface SearchResponse {
-    results: Search[]
+interface Track {
+    id: string,
+    name: string,
+    channel: string | null,
+    artist: string | null,
+    album: string | null,
+    albumCover: string,
+    uri: string | null,
+    serviceId: string,
 }
 
 interface SearchSlice {
     query: string,
     error: string,
     loading: boolean,
-    searchResults: SearchResponse,
+    searchResults: SearchResults[],
 }
 
 const initialState: SearchSlice = {
     query: "",
     error: "",
     loading: false,
-    searchResults: null,
+    searchResults: [],
 };
 
 export const search = createAsyncThunk(
@@ -32,6 +39,7 @@ export const search = createAsyncThunk(
             const headers = new Headers();
             headers.set('X-User-Id', userId);
             // Call to search all apps
+            console.log("seaching...")
             const response = await fetch(`${SEARCH_SERVICE_URL}?q=${query}`, {});
 
             return await response.json();
@@ -78,9 +86,8 @@ const SearchSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(addTrackToPlaylist.fulfilled, (state, action) => {
+            .addCase(addTrackToPlaylist.fulfilled, (state) => {
                 state.loading = false;
-                state.searchResults = action.payload;
             })
             .addCase(addTrackToPlaylist.rejected, (state) => {
                 state.loading = false;

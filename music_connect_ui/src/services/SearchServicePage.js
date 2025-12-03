@@ -20,6 +20,7 @@ const SearchServicePage = () => {
 
     const spotifySearchResults = useSelector((state) => state.spotify.searchResults);
     const musicConnectSearchResults = useSelector((state) => state.search.searchResults);
+    const musicConnectSearchResultsLoading = useSelector((state) => state.search.loading);
     const spotifySearchResultsLoading = useSelector((state) => state.spotify.loading);
     const youTubeMusicSearchResults = useSelector((state) => state.youtubeMusic.searchResults);
     const youTubeMusicSearchResultsLoading = useSelector((state) => state.youtubeMusic.loading);
@@ -54,14 +55,17 @@ const SearchServicePage = () => {
             setResultCount(spotifySearchResults.length);
         }
         else if (serviceId === "YouTube") { //YouTube Music
+            console.log(youTubeMusicSearchResults);
             setSearchResults(youTubeMusicSearchResults);
             setSearchResultsLoading(youTubeMusicSearchResultsLoading);
             setResultCount(youTubeMusicSearchResults.length);
         }
         else {
             setSearchResults(musicConnectSearchResults);
-            // setResultCount(musicConnectSearchResults.length);
+            setSearchResultsLoading(musicConnectSearchResultsLoading);
+            setResultCount(musicConnectSearchResults.length);
         }
+        setSearchResultsLoading(false);
     }, [searchQuery, spotifySearchResults, youTubeMusicSearchResults, musicConnectSearchResults]);
 
     useEffect(() => {
@@ -81,12 +85,11 @@ const SearchServicePage = () => {
     }
 
     const searchYouTubeService = async () => {
-        console.log("searching youtube")
         await dispatch(searchYouTubeMusic(searchQuery));
     }
 
     const searchMusicConnect = async () => {
-        await dispatch(search({userId: 'user123', query: searchQuery}));
+        await dispatch(search({userId: username, query: searchQuery}));
     }
 
     return (

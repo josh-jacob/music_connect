@@ -15,7 +15,6 @@ const SearchResultItem = ({name, artist, album, uri, image, serviceId}) => {
     const username = localStorage.getItem("username");
 
     const addToPlaylist = async (id) => {
-        console.log(serviceId);
         if (serviceId === "spotify") {
             const track = { uris: [uri] }
             await dispatch(addSpotifyTrackToPlaylist({userId: username, playlistId: id, tracks: track }));

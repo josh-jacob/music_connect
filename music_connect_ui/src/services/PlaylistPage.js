@@ -37,7 +37,6 @@ const PlaylistPage = () => {
             setServiceURL("/spotify");
         }
         else { // service === YouTube
-            console.log(youtubePlaylist?.tracks)
             setTracks(youtubePlaylist?.tracks);
             setPlaylistName(youtubePlaylist?.name);
             setPlaylistCover(youtubePlaylist?.image !== "" ? youtubePlaylist?.image : BlankAlbumCover);
@@ -71,7 +70,6 @@ const PlaylistPage = () => {
             await dispatch(fetchSpotifyPlaylistTracks({userId: username, playlistId: playlistId}));
         }
         else { // service === YouTube
-            console.log("fetching youtube playlist");
             await dispatch(fetchYouTubePlaylistTracks(playlistId));
         }
     };
