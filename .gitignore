@@ -3,8 +3,7 @@
 ```gitignore
 # macOS
 .DS_Store
-docker-compose.yml
-Dockerfile.ibmcloud
+*.ibmcloud*
 
 # Environment files
 .env
