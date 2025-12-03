@@ -9,7 +9,7 @@ from googleapiclient.discovery import build
 
 
 CLIENT_SECRET_FILE = os.getenv("YOUTUBE_CLIENT_SECRET_FILE")
-SCOPES = ["https://www.googleapis.com/auth/youtube.readonly"]
+SCOPES = ["https://www.googleapis.com/auth/youtube"]
 
 def get_flow():
     return Flow.from_client_secrets_file(
