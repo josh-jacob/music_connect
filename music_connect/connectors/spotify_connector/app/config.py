@@ -23,14 +23,15 @@ class Settings(BaseSettings):
 
     # --- Storage Backend ---
     STORAGE_BACKEND: str = "memory"
+    PROVIDER_NAME: str = "spotify" 
 
     # --- Postgres Settings ---
-    MC_PG_HOST: Optional[str] = None
-    MC_PG_PORT: Optional[int] = None
-    MC_PG_DB: Optional[str] = None
-    MC_PG_USER: Optional[str] = None
-    MC_PG_PASSWORD: Optional[str] = None
-    MC_PG_SSLMODE: Optional[str] = None
+    MC_PG_HOST: Optional[str] = "host.docker.internal"
+    MC_PG_PORT: Optional[int] = 5432
+    MC_PG_DB: Optional[str] = "musicconnect"
+    MC_PG_USER: Optional[str] = "musiconnect_app"
+    MC_PG_PASSWORD: Optional[str] = "mc_password"
+    MC_PG_SSLMODE: Optional[str] = "disable"
 
     # --- CORS Settings (FIX) ---
     CORS_ALLOWED_ORIGINS: List[str] = ["*"]
