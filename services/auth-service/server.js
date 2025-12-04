@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
-const { Pool } = require('pg');
+// const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -14,7 +14,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_TIME = 900000; 
 
-// Database connection pool
+// ===== DATABASE COMMENTED OUT - USING IN-MEMORY STORAGE =====
+// Uncomment this section when you're ready to use PostgreSQL
+
+/*
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 5432,
@@ -35,6 +38,10 @@ pool.connect((err, client, release) => {
     release();
   }
 });
+*/
+
+// ===== TEMPORARY IN-MEMORY USER STORAGE =====
+const users = new Map(); // Stores user data: { username, email, password, fullName, verified, createdAt }
 
 // Email configuration
 const EMAIL_USER = process.env.EMAIL_USER || 'your-email@gmail.com';
@@ -59,7 +66,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// In-memory storage for tokens and rate limiting only
+// In-memory storage for tokens and rate limiting
 const resetTokens = new Map();
 const verificationTokens = new Map(); 
 const tokenBlacklist = new Set();
@@ -206,7 +213,13 @@ const authenticateToken = (req, res, next) => {
 
 // Health Check
 app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', service: 'Auth Service', timestamp: new Date().toISOString(), version: '2.2.0' });
+  res.json({ 
+    status: 'healthy', 
+    service: 'Auth Service', 
+    timestamp: new Date().toISOString(), 
+    version: '2.2.0',
+    database: 'in-memory (PostgreSQL disabled)'
+  });
 });
 
 // Register
@@ -217,34 +230,32 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Username, email, and password required' });
 
     // Check if username exists
-    const usernameCheck = await pool.query(
-      'SELECT id FROM core.users WHERE email = $1',
-      [username]
-    );
-    if (usernameCheck.rows.length > 0) {
+    if (users.has(username)) {
       return res.status(409).json({ error: 'Username already exists' });
     }
 
     // Check if email exists
-    const emailCheck = await pool.query(
-      'SELECT id FROM core.users WHERE email = $1',
-      [email]
-    );
-    if (emailCheck.rows.length > 0) {
-      return res.status(409).json({ error: 'Email already exists' });
+    for (const [, userData] of users) {
+      if (userData.email === email) {
+        return res.status(409).json({ error: 'Email already exists' });
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
     
-    // Insert new user
-    const result = await pool.query(
-      `INSERT INTO core.users (email, password_hash, display_name, is_active) 
-       VALUES ($1, $2, $3, true) 
-       RETURNING id, email, display_name, created_at, is_active`,
-      [email, hashedPassword, fullName || username]
-    );
+    // Store user in memory
+    const newUser = {
+      username,
+      email,
+      password: hashedPassword,
+      fullName: fullName || username,
+      verified: false,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
     
-    const newUser = result.rows[0];
+    users.set(username, newUser);
     
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
@@ -264,7 +275,7 @@ app.post('/api/auth/register', async (req, res) => {
 
     res.status(201).json({ 
       message: 'Account created! Please check your email to verify your account.',
-      user: { username, email, fullName: newUser.display_name }
+      user: { username, email, fullName: newUser.fullName }
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -292,18 +303,16 @@ app.post('/api/auth/verify-email', async (req, res) => {
       return res.status(400).json({ error: 'Verification token has expired. Please request a new one.' });
     }
 
-    // Update user verification status
-    const result = await pool.query(
-      'UPDATE core.users SET is_active = true, updated_at = NOW() WHERE email = $1 RETURNING *',
-      [tokenData.username]
-    );
-    
-    const user = result.rows[0];
+    const user = users.get(tokenData.username);
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    user.verified = true;
+    user.updatedAt = new Date().toISOString();
+    users.set(tokenData.username, user);
+    
     verificationTokens.delete(token);
     
     logActivity(tokenData.username, 'EMAIL_VERIFIED');
@@ -324,29 +333,33 @@ app.post('/api/auth/resend-verification', async (req, res) => {
       return res.status(400).json({ error: 'Email required' });
     }
 
-    const result = await pool.query(
-      'SELECT email, display_name, is_active FROM core.users WHERE email = $1',
-      [email]
-    );
+    let foundUser = null;
+    let foundUsername = null;
+    
+    for (const [username, userData] of users) {
+      if (userData.email === email) {
+        foundUser = userData;
+        foundUsername = username;
+        break;
+      }
+    }
 
-    if (result.rows.length === 0) {
+    if (!foundUser) {
       return res.json({ message: 'If the email exists and is not verified, a verification link has been sent.' });
     }
 
-    const user = result.rows[0];
-
-    if (user.is_active) {
+    if (foundUser.verified) {
       return res.status(400).json({ error: 'Email is already verified' });
     }
 
     const verificationToken = crypto.randomBytes(32).toString('hex');
     verificationTokens.set(verificationToken, {
-      username: user.email,
+      username: foundUsername,
       expiresAt: Date.now() + 24 * 60 * 60 * 1000
     });
 
-    await sendVerificationEmail(email, user.email, verificationToken);
-    logActivity(user.email, 'VERIFICATION_EMAIL_RESENT');
+    await sendVerificationEmail(email, foundUsername, verificationToken);
+    logActivity(foundUsername, 'VERIFICATION_EMAIL_RESENT');
 
     res.json({ message: 'Verification email sent! Please check your inbox.' });
   } catch (error) {
@@ -362,24 +375,19 @@ app.post('/api/auth/login', async (req, res) => {
     const lock = isAccountLocked(username);
     if (lock.locked) return res.status(423).json({ error: `Account locked. Try again in ${lock.remainingTime} minutes.` });
 
-    const result = await pool.query(
-      'SELECT * FROM core.users WHERE email = $1',
-      [username]
-    );
-    
-    const user = result.rows[0];
+    const user = users.get(username);
     
     if (!user) {
       const result = recordFailedAttempt(username);
       return res.status(401).json({ error: 'Invalid credentials', attemptsRemaining: 5 - result.attempts });
     }
 
-    if (!await bcrypt.compare(password, user.password_hash)) {
+    if (!await bcrypt.compare(password, user.password)) {
       const result = recordFailedAttempt(username);
       return res.status(401).json({ error: 'Invalid credentials', attemptsRemaining: 5 - result.attempts });
     }
 
-    if (!user.is_active) {
+    if (!user.verified) {
       return res.status(403).json({ 
         error: 'Please verify your email before logging in. Check your inbox for the verification link.',
         needsVerification: true 
@@ -392,7 +400,7 @@ app.post('/api/auth/login', async (req, res) => {
     const token = jwt.sign({ 
       username, 
       email: user.email,
-      userId: user.id 
+      userId: username 
     }, JWT_SECRET, { expiresIn: '24h' });
     
     res.json({ 
@@ -400,7 +408,7 @@ app.post('/api/auth/login', async (req, res) => {
       user: { 
         username, 
         email: user.email, 
-        fullName: user.display_name 
+        fullName: user.fullName 
       }, 
       token 
     });
@@ -428,23 +436,19 @@ app.get('/api/auth/verify', authenticateToken, (req, res) => {
 // Get Profile
 app.get('/api/auth/profile', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT id, email, display_name, created_at, updated_at, is_active FROM core.users WHERE email = $1',
-      [req.user.username]
-    );
+    const user = users.get(req.user.username);
     
-    const user = result.rows[0];
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     res.json({
-      username: user.email,
+      username: user.username,
       email: user.email,
-      fullName: user.display_name,
+      fullName: user.fullName,
       avatarUrl: null,
-      createdAt: user.created_at,
-      updatedAt: user.updated_at || user.created_at,
-      isActive: user.is_active,
-      verified: user.is_active
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      isActive: user.isActive,
+      verified: user.verified
     });
   } catch (error) {
     console.error('Profile fetch error:', error);
@@ -457,53 +461,39 @@ app.put('/api/auth/profile', authenticateToken, async (req, res) => {
   try {
     const { fullName, email, currentPassword, newPassword } = req.body;
     
-    const result = await pool.query(
-      'SELECT * FROM core.users WHERE email = $1',
-      [req.user.username]
-    );
+    const user = users.get(req.user.username);
     
-    const user = result.rows[0];
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const updates = [];
-    const values = [];
-    let paramCount = 1;
+    let updated = false;
 
     if (newPassword) {
       if (!currentPassword) return res.status(400).json({ error: 'Current password required to change password' });
-      if (!await bcrypt.compare(currentPassword, user.password_hash)) {
+      if (!await bcrypt.compare(currentPassword, user.password)) {
         return res.status(401).json({ error: 'Current password is incorrect' });
       }
       if (newPassword.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
       
-      const hashedPassword = await bcrypt.hash(newPassword, 12);
-      updates.push(`password_hash = $${paramCount}`);
-      values.push(hashedPassword);
-      paramCount++;
+      user.password = await bcrypt.hash(newPassword, 12);
+      updated = true;
       
       logActivity(req.user.username, 'PASSWORD_CHANGED');
     }
 
-    if (fullName && fullName !== user.display_name) {
-      updates.push(`display_name = $${paramCount}`);
-      values.push(fullName);
-      paramCount++;
+    if (fullName && fullName !== user.fullName) {
+      user.fullName = fullName;
+      updated = true;
     }
     
     if (email && email !== user.email) {
-      updates.push(`email = $${paramCount}`);
-      values.push(email);
-      paramCount++;
+      user.email = email;
+      updated = true;
     }
 
-    if (updates.length > 0) {
-      updates.push(`updated_at = NOW()`);
-      values.push(user.id);
-      
-      const query = `UPDATE core.users SET ${updates.join(', ')} WHERE id = $${paramCount} RETURNING *`;
-      const updateResult = await pool.query(query, values);
-      
-      res.json({ message: 'Profile updated successfully', user: updateResult.rows[0] });
+    if (updated) {
+      user.updatedAt = new Date().toISOString();
+      users.set(req.user.username, user);
+      res.json({ message: 'Profile updated successfully', user });
     } else {
       res.json({ message: 'No changes made', user });
     }
@@ -516,13 +506,12 @@ app.put('/api/auth/profile', authenticateToken, async (req, res) => {
 // Update Avatar
 app.post('/api/auth/avatar', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query(
-      'UPDATE core.users SET updated_at = NOW() WHERE email = $1 RETURNING email',
-      [req.user.username]
-    );
+    const user = users.get(req.user.username);
     
-    const user = result.rows[0];
     if (!user) return res.status(404).json({ error: 'User not found' });
+
+    user.updatedAt = new Date().toISOString();
+    users.set(req.user.username, user);
 
     logActivity(req.user.username, 'AVATAR_UPDATED');
 
@@ -542,24 +531,29 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       return res.status(400).json({ error: 'Email required' });
     }
 
-    const result = await pool.query(
-      'SELECT email, display_name FROM core.users WHERE email = $1',
-      [email]
-    );
+    let foundUser = null;
+    let foundUsername = null;
+    
+    for (const [username, userData] of users) {
+      if (userData.email === email) {
+        foundUser = userData;
+        foundUsername = username;
+        break;
+      }
+    }
 
-    if (result.rows.length === 0) {
+    if (!foundUser) {
       return res.json({ message: 'If the email exists, a password reset link has been sent.' });
     }
 
-    const user = result.rows[0];
     const resetToken = crypto.randomBytes(32).toString('hex');
     resetTokens.set(resetToken, {
-      username: user.email,
+      username: foundUsername,
       expiresAt: Date.now() + 60 * 60 * 1000 
     });
 
-    await sendPasswordResetEmail(email, user.display_name, resetToken);
-    logActivity(user.email, 'PASSWORD_RESET_REQUESTED');
+    await sendPasswordResetEmail(email, foundUser.fullName, resetToken);
+    logActivity(foundUsername, 'PASSWORD_RESET_REQUESTED');
 
     res.json({ message: 'Password reset link sent! Please check your email.' });
   } catch (error) {
@@ -592,17 +586,16 @@ app.post('/api/auth/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'Reset token has expired' });
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    const user = users.get(tokenData.username);
     
-    const result = await pool.query(
-      'UPDATE core.users SET password_hash = $1, updated_at = NOW() WHERE email = $2 RETURNING email',
-      [hashedPassword, tokenData.username]
-    );
-    
-    if (result.rows.length === 0) {
+    if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    user.password = await bcrypt.hash(newPassword, 12);
+    user.updatedAt = new Date().toISOString();
+    users.set(tokenData.username, user);
+    
     resetTokens.delete(token);
     
     logActivity(tokenData.username, 'PASSWORD_RESET_COMPLETED');
@@ -625,26 +618,21 @@ app.get('/api/auth/export', authenticateToken, async (req, res) => {
   try {
     const { format = 'json' } = req.query;
     
-    const result = await pool.query(
-      'SELECT id, email, display_name, is_active, created_at, updated_at FROM core.users WHERE email = $1',
-      [req.user.username]
-    );
-    
-    const user = result.rows[0];
+    const user = users.get(req.user.username);
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     const exportData = {
-      username: user.email,
+      username: user.username,
       email: user.email,
-      fullName: user.display_name || '',
-      isActive: user.is_active,
-      verified: user.is_active,
-      createdAt: user.created_at,
-      updatedAt: user.updated_at || user.created_at,
-      verifiedAt: user.updated_at || null,
+      fullName: user.fullName || '',
+      isActive: user.isActive,
+      verified: user.verified,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      verifiedAt: user.updatedAt || null,
       avatarUrl: null
     };
 
@@ -653,11 +641,10 @@ app.get('/api/auth/export', authenticateToken, async (req, res) => {
     switch (format.toLowerCase()) {
       case 'json':
         res.setHeader('Content-Type', 'application/json');
-        res.setHeader('Content-Disposition', `attachment; filename="user_data_${user.email}_${Date.now()}.json"`);
+        res.setHeader('Content-Disposition', `attachment; filename="user_data_${user.username}_${Date.now()}.json"`);
         return res.json({ user: exportData });
 
       case 'csv':
-        // Excel-friendly CSV format with proper escaping
         const escapeCSV = (value) => {
           if (value === null || value === undefined) return '';
           const stringValue = String(value);
@@ -684,7 +671,7 @@ app.get('/api/auth/export', authenticateToken, async (req, res) => {
         const csvContent = headers.join(',') + '\n' + row.join(',');
         
         res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename="user_data_${user.email}_${Date.now()}.csv"`);
+        res.setHeader('Content-Disposition', `attachment; filename="user_data_${user.username}_${Date.now()}.csv"`);
         return res.send(csvContent);
 
       case 'xml':
@@ -702,7 +689,7 @@ app.get('/api/auth/export', authenticateToken, async (req, res) => {
 </user>`;
         
         res.setHeader('Content-Type', 'application/xml');
-        res.setHeader('Content-Disposition', `attachment; filename="user_data_${user.email}_${Date.now()}.xml"`);
+        res.setHeader('Content-Disposition', `attachment; filename="user_data_${user.username}_${Date.now()}.xml"`);
         return res.send(xmlContent);
 
       default:
@@ -719,16 +706,11 @@ app.delete('/api/auth/account', authenticateToken, async (req, res) => {
   try {
     const { password, confirmation } = req.body;
     
-    const result = await pool.query(
-      'SELECT * FROM core.users WHERE email = $1',
-      [req.user.username]
-    );
-    
-    const user = result.rows[0];
+    const user = users.get(req.user.username);
     
     if (!user) return res.status(404).json({ error: 'User not found' });
     
-    if (!await bcrypt.compare(password, user.password_hash)) {
+    if (!await bcrypt.compare(password, user.password)) {
       return res.status(401).json({ error: 'Incorrect password' });
     }
     
@@ -738,7 +720,7 @@ app.delete('/api/auth/account', authenticateToken, async (req, res) => {
     
     logActivity(req.user.username, 'ACCOUNT_DELETED');
     
-    await pool.query('DELETE FROM core.users WHERE id = $1', [user.id]);
+    users.delete(req.user.username);
     activityLogs.delete(req.user.username);
     
     res.json({ message: 'Account deleted successfully' });
@@ -754,5 +736,6 @@ app.delete('/api/auth/account', authenticateToken, async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Email configured: ${EMAIL_USER}`);
-  console.log(`Database: ${process.env.DB_NAME}@${process.env.DB_HOST}`);
+  console.log(`Storage: In-memory (PostgreSQL disabled)`);
+  console.log(`NOTE: Data will be lost when server restarts`);
 });
