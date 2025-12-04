@@ -1,48 +1,52 @@
-import './App.css';
-import {BrowserRouter as Router, Route, Routes} from "react-router";
-import {AuthProvider} from './services/authentication/AuthContext'
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import { AuthProvider } from './services/authentication/AuthContext';
 import PrivateRoute from './services/authentication/PrivateRoute';
-import LoginPage from './services/authentication/LoginPage';
-import CreateAccountPage from "./services/authentication/CreateAccountPage";
-import RequestResetPasswordPage from "./services/authentication/RequestResetPasswordPage";
-import VerifyEmailPage from "./services/authentication/VerifyEmailPage";
+import './App.css';
+import LoginPage from './services/authentication/Login';
+import CreateAccountPage from "./services/authentication/CreateAccount";
+import ForgotPasswordPage from "./services/authentication/ForgotPassword";
+import ResetPasswordPage from "./services/authentication/ResetPassword";
+import VerifyEmail from "./services/authentication/VerifyEmail"; 
+import AccountPage from "./pages/AccountPage";
 import Dashboard from "./services/Dashboard";
 import SpotifyServicePage from "./services/SpotifyServicePage";
 import YouTubeMusicServicePage from "./services/YouTubeMusicServicePage";
 import SearchServicePage from "./services/SearchServicePage";
 import ExportServicePage from "./services/ExportServicePage";
-import PlaylistMigrationPage from "./services/PlaylistMigrationServicePage";
-import PlaylistPage from "./services/PlaylistPage";
-import ResetPasswordPage from "./services/authentication/ResetPasswordPage";
+import ExportPage from "./pages/ExportPage";
 
 function App() {
-
   return (
     <div className="App">
-        <Router>
-            <AuthProvider>
-                <Routes>
-                    <Route path="/login" element={<LoginPage type="music-connect"/>} />
-                    <Route path="/create-account" element={<CreateAccountPage />} />
-                    <Route path="/reset-password" element={<RequestResetPasswordPage />} />
-                    <Route path="/music-connect/verify-email" element={<VerifyEmailPage />} />
-                    <Route path="/music-connect/reset-password" element={<ResetPasswordPage />} />
-                    {/* authenticated routes */}
-                    <Route element={<PrivateRoute />}>
-                        <Route path="/" element={<Dashboard />} />
-                        <Route path="/spotify" element={<SpotifyServicePage />} />
-                        <Route path="/youtube-music" element={<YouTubeMusicServicePage />} />
-                        <Route path="/youtube-music/login" element={<LoginPage type="youtube-music"/>} />
-                        <Route path="/:service/playlist/:playlistId" element={<PlaylistPage />} />
-                        <Route path="/search" element={<SearchServicePage />} />
-                        <Route path="/playlist-migration" element={<PlaylistMigrationPage/>} />
-                        <Route path="/export" element={<ExportServicePage />} />
-                    </Route>
-                </Routes>
-            </AuthProvider>
-        </Router>
+      <Router>
+        <AuthProvider>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/music-connect/login" element={<LoginPage type="music-connect" />} />
+            <Route path="/create-account" element={<CreateAccountPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/music-connect/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/music-connect/verify-email" element={<VerifyEmail />} /> {/* ADD THIS */}
+            <Route path="/spotify/login" element={<LoginPage type="spotify" />} />
+            <Route path="/youtube-music/login" element={<LoginPage type="youtube-music" />} />
+
+            {/* Protected routes */}
+            <Route element={<PrivateRoute />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/account" element={<AccountPage />} />
+              <Route path="/spotify" element={<SpotifyServicePage />} />
+              <Route path="/youtube-music" element={<YouTubeMusicServicePage />} />
+              <Route path="/search" element={<SearchServicePage />} />
+              <Route path="/export" element={<ExportPage />} /> 
+            </Route>
+
+            {/* Catch all - redirect to login */}
+            <Route path="*" element={<Navigate to="/music-connect/login" replace />} />
+          </Routes>
+        </AuthProvider>
+      </Router>
     </div>
   );
 }
 
-export default App;
+export default App; 
