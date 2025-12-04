@@ -1,86 +1,109 @@
-import "./ResetPasswordPage.css";
-import musicConnectLogo from "../../files/music-connect-logo.png";
-import TextField from "@mui/material/TextField";
-import {Alert, Button} from "@mui/material";
-import {useNavigate, useSearchParams} from "react-router";
-import {useEffect, useState} from "react";
-import {useDispatch} from "react-redux";
-import {resetPassword} from "../../slices/UserSlice.ts";
+import './ForgotPassword.css';
+import musicConnectLogo from '../../files/music-connect-logo.png';
+import TextField from '@mui/material/TextField';
+import { useState } from "react";
+import { Alert, Button } from "@mui/material";
+import { useNavigate } from "react-router";
+import { useAuth } from "./AuthContext";
 
-const ResetPasswordPage = () => {
+const ForgotPasswordPage = () => {
     const navigate = useNavigate();
-    const dispatch = useDispatch();
+    const { forgotPassword } = useAuth();
 
-    const [searchParams, setSearchParams] = useSearchParams();
-
-    const token = searchParams.get("token");
-
+    const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
-    const [password, setPassword] = useState("");
-    const [checkPassword, setCheckPassword] = useState("");
+    const [success, setSuccess] = useState(false);
     const [message, setMessage] = useState("");
 
-    const onResetPassword = async () => {
+    const handleSubmit = async () => {
         setLoading(true);
-
-        if (password !== checkPassword) {
-            setError(true);
-        }
-        else {
-            await dispatch(resetPassword({token, password}));
-
-            if (!error) {
-                setMessage("Password reset. Redirecting to login.");
-                setTimeout(() => navigate("/login"), 2000);
-            }
-        }
-        setLoading(false);
-    }
-
-    useEffect(() => {
-        if (error) {
-            if (password === "" || checkPassword === "") {
-                setMessage("Missing field");
-            }
-            else if (password !== checkPassword) {
-                setMessage("Passwords don't match");
-            }
-            else {
-                setMessage("There was a problem resetting your password. Please try again.");
-            }
-        }
-    }, [error]);
-
-    useEffect(() => {
-        setMessage("");
         setError(false);
-    }, [password, checkPassword]);
+        setSuccess(false);
+        setMessage("");
+
+        if (!email || !email.includes('@')) {
+            setError(true);
+            setMessage("Please enter a valid email address.");
+            setLoading(false);
+            return;
+        }
+
+        const result = await forgotPassword(email);
+
+        if (result.success) {
+            setSuccess(true);
+            setMessage(result.message || "If the email exists, a password reset link has been sent.");
+        } else {
+            setError(true);
+            setMessage(result.error || "Failed to send reset email. Please try again.");
+        }
+
+        setLoading(false);
+    };
+
+    const handleKeyPress = (event) => {
+        if (event.key === 'Enter') {
+            handleSubmit();
+        }
+    };
 
     return (
         <div>
-            <div className="reset-password-container">
-                <img className={"logo"} src={musicConnectLogo} alt={`MusicConnect Logo`}/>
-                <div className={"reset-password-wrapper"}>
-                    <div className={"password-container"}>
-                        <p className={"password-label"}>Enter New Password:</p>
-                        <div className={"password-label"}></div>
-                        <TextField hiddenLabel id="password-field" size="small" type={"password"} placeholder={"Password"} sx={{ width: '60%' }} onChange={(e) => setPassword(e.target.value)} />
+            <div className="auth-container">
+                <img className={"logo"} src={musicConnectLogo} alt={`MusicConnect Logo`} />
+                
+                <h2 style={{ color: '#20B654', marginBottom: '10px' }}>Forgot Password?</h2>
+                <p style={{ color: '#666', marginBottom: '20px', fontSize: '14px' }}>
+                    Enter your email address and we'll send you a link to reset your password.
+                </p>
+
+                <div className={"auth-wrapper"}>
+                    <div className={"username-container"}>
+                        <p className={"username-label"}>Email Address:</p>
+                        <TextField 
+                            hiddenLabel 
+                            id="email-field" 
+                            size="small" 
+                            type="email"
+                            placeholder={"your.email@example.com"} 
+                            value={email}
+                            sx={{ width: '80%' }} 
+                            onChange={(e) => setEmail(e.target.value)}
+                            onKeyPress={handleKeyPress}
+                            disabled={loading}
+                        />
                     </div>
-                    <div className={"password-container"}>
-                        <p className={"password-label"}>Re-Enter New Password:</p>
-                        <div className={"password-label"}></div>
-                        <TextField hiddenLabel id="password-field" size="small" type={"password"} placeholder={"Re-enter Password"} sx={{ width: '60%' }} onChange={(e) => setCheckPassword(e.target.value)} />
-                    </div>
-                    <p className={"password-requirements"}>Your password must be at least 8 characters.</p>
                 </div>
+
                 <div className={"auth-footer"}>
-                    {message !== "" ? <Alert severity={error ? "error" : "success"}>{message}</Alert> : null}
-                    <Button className={"reset-password-button"} variant="contained" loading={loading} loadingIndicator="Loading…" sx={{ backgroundColor: "#20B654", color: "white", width: "100px" }} onClick={onResetPassword}>Reset Password</Button>
+                    {message !== "" ? (
+                        <Alert severity={error ? "error" : "success"} sx={{ marginBottom: '10px' }}>
+                            {message}
+                        </Alert>
+                    ) : null}
+
+                    <p className={"create-account"}>
+                        Remember your password? <a href={'/music-connect/login'}>Back to Login</a>
+                    </p>
+
+                    <Button 
+                        className={"submit-button"} 
+                        variant="contained" 
+                        disabled={loading}
+                        sx={{ 
+                            backgroundColor: "#20B654", 
+                            color: "white", 
+                            width: "150px" 
+                        }} 
+                        onClick={handleSubmit}
+                    >
+                        {loading ? "Sending..." : "Send Reset Link"}
+                    </Button>
                 </div>
             </div>
         </div>
     );
-};
+}
 
-export default ResetPasswordPage;
+export default ForgotPasswordPage;
