@@ -3,16 +3,26 @@ import {Button, Dialog, DialogActions, DialogContent, DialogTitle, Select} from 
 import {useEffect, useState} from "react";
 import {useSelector} from "react-redux";
 
-const AddTrackToPlaylistModal = ({open, onClose, onSubmit}) => {
+const AddTrackToPlaylistModal = ({open, onClose, serviceId, onSubmit}) => {
     const [playlistId, setPlaylistId] = useState("");
     const selectSpotifyPlaylists = useSelector((state) => state.spotify.playlists);
+    const selectYouTubeMusicPlaylists = useSelector((state) => state.youtubeMusic.playlists);
+    const [playlists, setPlaylists] = useState(null);
 
     const clearFields = () => {
         setPlaylistId("");
+        setPlaylists([]);
     };
 
     useEffect(() => {
         clearFields();
+
+        if(serviceId === 'spotify') {
+            setPlaylists(selectSpotifyPlaylists);
+        }
+        else { //serviceId === 'youtube-music'
+            setPlaylists(selectYouTubeMusicPlaylists);
+        }
     }, [open])
 
     const onCreate = () => {
@@ -41,7 +51,7 @@ const AddTrackToPlaylistModal = ({open, onClose, onSubmit}) => {
                         <option key={""} value={""}>
                             Select Playlist
                         </option>
-                        {selectSpotifyPlaylists.map((playlist) => (
+                        {playlists?.map((playlist) => (
                             <option key={playlist.id} value={playlist.id}>
                                 {playlist.name}
                             </option>

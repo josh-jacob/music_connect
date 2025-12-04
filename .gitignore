@@ -3,10 +3,11 @@
 ```gitignore
 # macOS
 .DS_Store
+*.ibmcloud*
 
 # Environment files
 .env
-.env.*
+#.env.*  share env.example files instead
 
 # Logs and temp files
 *.log

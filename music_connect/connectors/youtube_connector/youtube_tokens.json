@@ -1,8 +1,0 @@
-{
-    "access_token": "ya29.a0ATi6K2uTz0S1eDxARKRErYPGdLXD5lvgJVKLYIZ_b0zPYzOyBT-4T-ZlEbC1lgsNSrGWC8hd8b0mUCDZFTI2QwTPZXIzBjaMYXVel_bbY0S0KLTjMb2sR3KqDwj9Jrhn2i_7nW7sWtHRrVsk4BLtBbfatkf9Uh-6k3MrDiop6ITZJUBzSc0BPKkt3IZlihE5dKydZPQaCgYKARkSARYSFQHGX2MihGpajbygtdOYYGMYMmQF2Q0206",
-    "refresh_token": "1//054dJJlI6QSQqCgYIARAAGAUSNwF-L9IrbeFxGzfRxUzr1t3sHLGjeeZtuii3NAM_y-aTYuq1r2FLFxxz2vCqG0oB7JeWk_6yREg",
-    "expires_at": "2025-12-03T14:21:49",
-    "scopes": [
-        "https://www.googleapis.com/auth/youtube.readonly"
-    ]
-}

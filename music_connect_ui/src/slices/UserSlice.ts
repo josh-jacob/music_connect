@@ -349,15 +349,6 @@ const UserSlice = createSlice({
             })
             .addCase(logout.fulfilled, (state, action) => {
                 state.loading = false;
-                if (!action.payload.error) {
-                    state.user = {
-                        username: "",
-                        name: "",
-                        email: "",
-                        token: "",
-                        sessionActive: false
-                    };
-                }
             })
             .addCase(logout.rejected, (state) => {
                 state.loading = false;

@@ -7,6 +7,8 @@ import {useDispatch, useSelector} from "react-redux";
 import {fetchSpotifyPlaylistTracks, removeSpotifyTrackFromPlaylist} from "../slices/SpotifySlice.ts";
 import {Button} from "@mui/material";
 import Header from "../components/Header";
+import BlankAlbumCover from "../files/blank-album-cover.png";
+import {fetchYouTubePlaylistTracks, removeYouTubeTrackFromPlaylist} from "../slices/YouTubeMusicSlice.ts";
 
 const PlaylistPage = () => {
     const dispatch = useDispatch();
@@ -20,6 +22,9 @@ const PlaylistPage = () => {
     const [tracks, setTracks] = useState([]);
 
     const spotifyPlaylist = useSelector((state) => state.spotify.playlists.find((playlist) => playlist.id === playlistId));
+    const youtubePlaylist = useSelector((state) => state.youtubeMusic.playlists.find((playlist) => playlist.id === playlistId));
+    const username = localStorage.getItem("username");
+
     useEffect(() => {
         fetchTracks();
     }, []);
@@ -28,30 +33,44 @@ const PlaylistPage = () => {
         if (service === 'spotify') {
             setTracks(spotifyPlaylist?.tracks);
             setPlaylistName(spotifyPlaylist?.name);
-            setPlaylistCover(spotifyPlaylist?.image);
+            setPlaylistCover(spotifyPlaylist?.image !== "" ? spotifyPlaylist?.image : BlankAlbumCover);
             setServiceURL("/spotify");
         }
         else { // service === YouTube
-            // TODO Get YouTube Music Playlists
+            setTracks(youtubePlaylist?.tracks);
+            setPlaylistName(youtubePlaylist?.name);
+            setPlaylistCover(youtubePlaylist?.image !== "" ? youtubePlaylist?.image : BlankAlbumCover);
             setServiceURL("/youtube-music");
         }
-    }, [spotifyPlaylist])
+    }, [spotifyPlaylist, youtubePlaylist])
 
 
     const removeTrackFromPlaylist = async (trackId) => {
-        const removeTrackRequest = {
-            uris: [trackId],
+        if (service === 'spotify') {
+            const removeTrackRequest = {
+                uris: [trackId],
+            }
+            await dispatch(removeSpotifyTrackFromPlaylist({
+                userId: username,
+                playlistId: playlistId,
+                tracks: removeTrackRequest
+            }));
         }
-        await dispatch(removeSpotifyTrackFromPlaylist({userId: "user123", playlistId: playlistId, tracks: removeTrackRequest}));
+        else {
+            await dispatch(removeYouTubeTrackFromPlaylist({
+                playlistId: playlistId,
+                videoId: trackId,
+            }));
+        }
         await fetchTracks();
     };
 
     const fetchTracks = async () => {
         if (service === 'spotify') {
-            await dispatch(fetchSpotifyPlaylistTracks({userId: 'user123', playlistId: playlistId}));
+            await dispatch(fetchSpotifyPlaylistTracks({userId: username, playlistId: playlistId}));
         }
         else { // service === YouTube
-            //
+            await dispatch(fetchYouTubePlaylistTracks(playlistId));
         }
     };
 
@@ -62,7 +81,7 @@ const PlaylistPage = () => {
             <PlaylistHeader name={playlistName} playlistCover={playlistCover} numTracks={tracks?.length} />
             <div className={"playlist-tracks-container"}>
                 {tracks?.map((track) => (
-                    <TrackItem name={track.name} artist={track.artist} albumName={track.albumName} albumCover={track.albumCover} trackId={track.uri} onDelete={removeTrackFromPlaylist}/>
+                    <TrackItem name={track.name} artist={track.artist ?? track.channel} albumName={track.albumName} albumCover={track.albumCover} trackId={track.uri ?? track.id} onDelete={removeTrackFromPlaylist}/>
                 ))}
             </div>
         </div>

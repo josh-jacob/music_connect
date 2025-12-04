@@ -1,0 +1,91 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: mc-postgres-dev
+    environment:
+      POSTGRES_USER: musiconnect_app
+      POSTGRES_PASSWORD: mc_password
+      POSTGRES_DB: musicconnect
+    ports:
+      - "5432:5432"          # host:container
+    volumes:
+      - mc-postgres-data:/var/lib/postgresql/data
+      # Optional: auto-load schema on first init
+      - ./docs/musiconnect_pgdb_schema_v2.sql:/docker-entrypoint-initdb.d/musiconnect_schema.sql:ro
+    networks:
+      - musiconnect-net
+
+  auth-service:
+    build:
+      context: ./services/auth-service
+    container_name: musiconnect-auth
+    env_file:
+      - ./services/auth-service/.env
+    depends_on:
+      - postgres
+    ports:
+      - "3001:3001"
+    networks:
+      - musiconnect-net
+
+  unified-search:
+    build:
+      context: ./services/unified_search
+    container_name: musiconnect-unified-search
+    env_file:
+      - ./services/unified_search/.env
+    depends_on:
+      - spotify-connector
+      - youtube-connector
+    ports:
+      - "8004:8000"          # host 8004 -> container 8000 (FastAPI)
+    networks:
+      - musiconnect-net
+
+  spotify-connector:
+    build:
+      context: ./music_connect/connectors/spotify_connector
+    container_name: musiconnect-spotify-connector
+    env_file:
+      - ./music_connect/connectors/spotify_connector/.env
+    ports:
+      - "8081:8000"          # host 8081 -> container 8000
+    networks:
+      - musiconnect-net
+
+  youtube-connector:
+    build:
+      context: ./music_connect/connectors/youtube_connector
+    container_name: musiconnect-youtube-connector
+    env_file:
+      - ./music_connect/connectors/youtube_connector/.env
+    volumes:
+      - ./music_connect/connectors/youtube_connector/youtube_oauth_credentials.json:/app/youtube_oauth_credentials.json:ro
+    ports:
+      - "8082:8000"          # host 8082 -> container 8000
+    networks:
+      - musiconnect-net
+
+  ui:
+    build:
+      context: ./music_connect_ui
+    container_name: musiconnect-ui
+    env_file:
+      - ./music_connect_ui/.env
+    ports:
+      - "3000:3000"          # UI on http://localhost:3000
+    depends_on:
+      - auth-service
+      - unified-search
+      - spotify-connector
+      - youtube-connector
+    networks:
+      - musiconnect-net
+
+networks:
+  musiconnect-net:
+
+volumes:
+  mc-postgres-data:

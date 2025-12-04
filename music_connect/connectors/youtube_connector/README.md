@@ -13,5 +13,5 @@ YOUTUBE_UI_REDIRECT_URL=http://localhost:3000/youtube-music
 uvicorn app.main:app
 
 4) login on 
-http://localhost:8000/auth/youtube/login
+http://localhost:8082/auth/youtube/login
 ###

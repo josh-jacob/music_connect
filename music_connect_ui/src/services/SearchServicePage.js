@@ -4,9 +4,11 @@ import Header from "../components/Header";
 import {Button, CircularProgress} from "@mui/material";
 import {useNavigate, useSearchParams} from "react-router";
 import {useEffect, useState} from "react";
-import {searchSpotify} from "../slices/SpotifySlice.ts";
+import {fetchSpotifyPlaylists, searchSpotify} from "../slices/SpotifySlice.ts";
+import {fetchYouTubePlaylists, searchYouTubeMusic} from "../slices/YouTubeMusicSlice.ts";
 import {useDispatch, useSelector} from "react-redux";
 import SearchResult from "../components/SearchResult";
+import {search} from "../slices/SearchSlice.ts";
 
 const SearchServicePage = () => {
     const navigate = useNavigate();
@@ -14,10 +16,14 @@ const SearchServicePage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const [resultCount, setResultCount] = useState(0);
     const [searchResults, setSearchResults] = useState([]);
-    const [searchResultsLoading, setSearchResultsLoading] = useState(true);
 
     const spotifySearchResults = useSelector((state) => state.spotify.searchResults);
+    const musicConnectSearchResults = useSelector((state) => state.search.searchResults.tracks);
+    const musicConnectSearchResultsLoading = useSelector((state) => state.search.loading);
     const spotifySearchResultsLoading = useSelector((state) => state.spotify.loading);
+    const youTubeMusicSearchResults = useSelector((state) => state.youtubeMusic.searchResults);
+    const youTubeMusicSearchResultsLoading = useSelector((state) => state.youtubeMusic.loading);
+    const username = localStorage.getItem("username");
 
     const serviceId = searchParams.get("sid");
     const searchQuery = searchParams.get("q") || "";
@@ -37,30 +43,59 @@ const SearchServicePage = () => {
     const clearSearchResults = async() => {
         setSearchResults([]);
         setResultCount(0);
-        setSearchResultsLoading(true);
     }
 
     useEffect(() => {
         clearSearchResults();
-        if (serviceId === "MusicConnect"){
-            //TODO
-        }
-        else if (serviceId === "Spotify") {
+        if (serviceId === "Spotify") {
             setSearchResults(spotifySearchResults);
-            setSearchResultsLoading(spotifySearchResultsLoading);
             setResultCount(spotifySearchResults.length);
         }
-        else { //YouTube Music
-            //TODO
+        else if (serviceId === "YouTube Music") { //YouTube Music
+            setSearchResults(youTubeMusicSearchResults);
+            setResultCount(youTubeMusicSearchResults.length);
         }
-    }, [searchQuery, spotifySearchResults]);
+        else {
+            setSearchResults(musicConnectSearchResults);
+            setResultCount(musicConnectSearchResults.length);
+        }
+    }, [searchQuery, spotifySearchResults, youTubeMusicSearchResults, musicConnectSearchResults]);
 
     useEffect(() => {
-        searchSpotifyService();
+        fetchPlaylists();
+        if (serviceId === "spotify") {
+            searchSpotifyService();
+        }
+        else if (serviceId === "YouTube Music") {
+            searchYouTubeService();
+        }
+        else {
+            searchMusicConnect();
+        }
     }, [searchQuery]);
 
+    const fetchPlaylists = async () => {
+        if (serviceId === "YouTube Music") {
+            await dispatch(fetchYouTubePlaylists());
+        }
+        else if (serviceId === "Spotify") {
+            await dispatch(fetchSpotifyPlaylists(username));
+        }
+        else {
+            await dispatch(fetchSpotifyPlaylists(username));
+            await dispatch(fetchYouTubePlaylists());
+        }
+    }
     const searchSpotifyService = async () => {
-        await dispatch(searchSpotify({ userId: 'user123', query: searchQuery}));
+        await dispatch(searchSpotify({ userId: username, query: searchQuery}));
+    }
+
+    const searchYouTubeService = async () => {
+        await dispatch(searchYouTubeMusic(searchQuery));
+    }
+
+    const searchMusicConnect = async () => {
+        await dispatch(search({userId: username, query: searchQuery}));
     }
 
     return (
@@ -71,14 +106,14 @@ const SearchServicePage = () => {
                 <SearchBar service={serviceId} q={searchQuery} />
             </div>
             <div className="search-results">
-                {!searchResultsLoading ?
+                {!(musicConnectSearchResultsLoading || spotifySearchResultsLoading || youTubeMusicSearchResultsLoading) ?
                     <p className="result-count">{resultCount} Results</p>
                 : null }
-                {searchResultsLoading ? <div className={"results-loading-container"}>
+                {(musicConnectSearchResultsLoading || spotifySearchResultsLoading || youTubeMusicSearchResultsLoading) ? <div className={"results-loading-container"}>
                     <CircularProgress className={"loading-spinner"} sx={{ alignSelf: "center" }}/>
                 </div> : null}
-                {!searchResultsLoading ? searchResults.map((result) => (
-                        <SearchResult name={result.name} artist={result.artist} album={result.album} uri={result.uri} image={result.albumCover} />
+                {!(musicConnectSearchResultsLoading || spotifySearchResultsLoading || youTubeMusicSearchResultsLoading) ? searchResults.map((result) => (
+                        <SearchResult name={result.name} artist={result.artist ?? result.channel} album={result.album} uri={result.uri ?? result.id} image={result.albumCover} serviceId={result.serviceId}/>
                     )) : null }
             </div>
         </div>
