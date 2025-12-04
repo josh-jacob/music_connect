@@ -13,8 +13,8 @@ RUN apt-get update \
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the application code
-COPY . .
+# Copy only the app directory
+COPY app ./app
 
 # Use non-root
 USER appuser
@@ -24,4 +24,4 @@ EXPOSE 8000
 
 # Start the FastAPI app with uvicorn
 # In IBM Cloud Kubernetes/Openshift you can set env vars/secrets for SPOTIFY_* values.
-CMD [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000" ]
+CMD [ "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000" ]
