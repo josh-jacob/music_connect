@@ -13,6 +13,7 @@ import SpotifyServicePage from "./services/SpotifyServicePage";
 import YouTubeMusicServicePage from "./services/YouTubeMusicServicePage";
 import SearchServicePage from "./services/SearchServicePage";
 import ExportServicePage from "./services/ExportServicePage";
+import PlaylistMigrationServicePage from "./services/PlaylistMigrationServicePage"; // ADDED THIS
 import ExportPage from "./pages/ExportPage";
 
 function App() {
@@ -26,7 +27,7 @@ function App() {
             <Route path="/create-account" element={<CreateAccountPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/music-connect/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/music-connect/verify-email" element={<VerifyEmail />} /> {/* ADD THIS */}
+            <Route path="/music-connect/verify-email" element={<VerifyEmail />} /> 
             <Route path="/spotify/login" element={<LoginPage type="spotify" />} />
             <Route path="/youtube-music/login" element={<LoginPage type="youtube-music" />} />
 
@@ -37,7 +38,8 @@ function App() {
               <Route path="/spotify" element={<SpotifyServicePage />} />
               <Route path="/youtube-music" element={<YouTubeMusicServicePage />} />
               <Route path="/search" element={<SearchServicePage />} />
-              <Route path="/export" element={<ExportPage />} /> 
+              <Route path="/export" element={<ExportPage />} />
+              <Route path="/playlist-migration" element={<PlaylistMigrationServicePage />} />
             </Route>
 
             {/* Catch all - redirect to login */}
@@ -49,4 +51,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;
