@@ -11,7 +11,7 @@ interface User {
 
 interface UserSlice {
     user: User,
-    error: string,
+    error: string | null,
     loading: boolean
 }
 
@@ -23,7 +23,7 @@ const initialState: UserSlice = {
         token: "",
         sessionActive: false,
     },
-    error: "",
+    error: null,
     loading: false,
 };
 

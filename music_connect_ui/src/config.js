@@ -5,13 +5,10 @@ export const SPOTIFY_SERVICE_URL =
   process.env.REACT_APP_SPOTIFY_SERVICE_URL || 'http://127.0.0.1:8081';
 
 export const YOUTUBE_SERVICE_URL =
-  process.env.REACT_APP_YOUTUBE_SERVICE_URL || 'http://127.0.0.1:8082';
+  process.env.REACT_APP_YOUTUBE_SERVICE_URL || 'http://127.0.0.1:8000';
 
 export const SEARCH_SERVICE_URL =
-  process.env.REACT_APP_SEARCH_SERVICE_URL || 'http://127.0.0.1:8083';
-
-export const EXPORT_SERVICE_URL =
-  process.env.REACT_APP_EXPORT_SERVICE_URL || '';
+  process.env.REACT_APP_SEARCH_SERVICE_URL || 'http://127.0.0.1:8004';
 
 export const PLAYLIST_MIGRATION_SERVICE_URL =
-  process.env.REACT_APP_PLAYLIST_MIGRATION_SERVICE_URL || 'http://localhost:8006';
+  process.env.REACT_APP_PLAYLIST_MIGRATION_SERVICE_URL || 'http://127.0.0.1:8083';
