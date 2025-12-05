@@ -5,7 +5,6 @@ __pycache__/
 *.log
 
 # Local secrets — NEVER bake into image
-youtube_oauth_credentials.json
 .env
 
 # Editor & VCS junk
