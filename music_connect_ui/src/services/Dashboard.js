@@ -1,7 +1,10 @@
 import './Dashboard.css';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { useAuth } from '../services/authentication/AuthContext';
+import { clearSpotifyAuth } from '../slices/SpotifySlice.ts';
+import { clearYouTubeAuth } from '../slices/YouTubeMusicSlice.ts';
 import Header from "../components/Header";
 import SearchBar from "../components/SearchBar";
 import ServiceButton from "../components/ServiceButton";
@@ -11,6 +14,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, 
 
 const DashboardPage = () => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const { logout, deleteAccount } = useAuth();
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -142,6 +146,34 @@ const DashboardPage = () => {
                         >
                             <Typography variant="body1" fontWeight="600">
                                 Cancel
+                            </Typography>
+                        </Button>
+
+                        <Button
+                            variant="outlined"
+                            size="large"
+                            color="warning"
+                            onClick={() => {
+                                console.log('Clearing Spotify auth...');
+                                dispatch(clearSpotifyAuth());
+                                console.log('Clearing YouTube auth...');
+                                dispatch(clearYouTubeAuth());
+                                console.log('Auth cleared! Redirecting to dashboard...');
+                                setShowLogoutDialog(false);
+
+                                // Force page reload to clear state
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 500);
+                            }}
+                            sx={{
+                                py: 1.5,
+                                textTransform: 'none',
+                                justifyContent: 'flex-start'
+                            }}
+                        >
+                            <Typography variant="body1" fontWeight="600">
+                                Clear Service Auth
                             </Typography>
                         </Button>
 

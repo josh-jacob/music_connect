@@ -1,20 +1,20 @@
-import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
-import { AuthProvider } from './services/authentication/AuthContext';
+import {BrowserRouter as Router, Navigate, Route, Routes} from "react-router-dom";
+import {AuthProvider} from './services/authentication/AuthContext';
 import PrivateRoute from './services/authentication/PrivateRoute';
 import './App.css';
 import LoginPage from './services/authentication/Login';
 import CreateAccountPage from "./services/authentication/CreateAccount";
 import ForgotPasswordPage from "./services/authentication/ForgotPassword";
 import ResetPasswordPage from "./services/authentication/ResetPassword";
-import VerifyEmail from "./services/authentication/VerifyEmail"; 
+import VerifyEmail from "./services/authentication/VerifyEmail";
 import AccountPage from "./pages/AccountPage";
 import Dashboard from "./services/Dashboard";
 import SpotifyServicePage from "./services/SpotifyServicePage";
 import YouTubeMusicServicePage from "./services/YouTubeMusicServicePage";
 import SearchServicePage from "./services/SearchServicePage";
-import ExportServicePage from "./services/ExportServicePage";
 import PlaylistMigrationServicePage from "./services/PlaylistMigrationServicePage"; // ADDED THIS
 import ExportPage from "./pages/ExportPage";
+import PlaylistMigrationServicePage from "./services/PlaylistMigrationServicePage";
 
 function App() {
   return (
@@ -37,9 +37,10 @@ function App() {
               <Route path="/account" element={<AccountPage />} />
               <Route path="/spotify" element={<SpotifyServicePage />} />
               <Route path="/youtube-music" element={<YouTubeMusicServicePage />} />
+              <Route path="/:service/playlist/:playlistId" element={<PlaylistPage />} />
               <Route path="/search" element={<SearchServicePage />} />
-              <Route path="/export" element={<ExportPage />} />
               <Route path="/playlist-migration" element={<PlaylistMigrationServicePage />} />
+              <Route path="/export" element={<ExportPage />} />
             </Route>
 
             {/* Catch all - redirect to login */}
