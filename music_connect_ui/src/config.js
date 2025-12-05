@@ -10,8 +10,5 @@ export const YOUTUBE_SERVICE_URL =
 export const SEARCH_SERVICE_URL =
   process.env.REACT_APP_SEARCH_SERVICE_URL || 'http://127.0.0.1:8004';
 
-export const EXPORT_SERVICE_URL =
-  process.env.REACT_APP_EXPORT_SERVICE_URL || '';
-
 export const PLAYLIST_MIGRATION_SERVICE_URL =
   process.env.REACT_APP_PLAYLIST_MIGRATION_SERVICE_URL || 'http://127.0.0.1:8083';

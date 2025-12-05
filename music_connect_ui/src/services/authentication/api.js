@@ -1,5 +1,7 @@
 // src/services/authentication/api.js
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+import { CORE_SERVICE_URL } from '../../config';
+
+const API_BASE_URL = CORE_SERVICE_URL;
 
 class AuthAPI {
   // Register new user
