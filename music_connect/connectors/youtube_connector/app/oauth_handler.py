@@ -17,7 +17,7 @@ def get_flow():
     return Flow.from_client_secrets_file(
         CLIENT_SECRET_FILE,
         scopes=SCOPES,
-        redirect_uri="http://localhost:8000/auth/youtube/callback"
+        redirect_uri=os.getenv("YOUTUBE_REDIRECT_URI")
     )
 
 def get_authenticated_service(credentials):
