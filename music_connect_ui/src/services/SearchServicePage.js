@@ -4,8 +4,8 @@ import Header from "../components/Header";
 import {Alert, Button, CircularProgress} from "@mui/material";
 import {useNavigate, useSearchParams} from "react-router";
 import {useEffect, useState} from "react";
-import {fetchSpotifyPlaylists, searchSpotify} from "../slices/SpotifySlice.ts";
-import {fetchYouTubePlaylists, searchYouTubeMusic} from "../slices/YouTubeMusicSlice.ts";
+import {fetchSpotifyPlaylists, fetchSpotifyUser, searchSpotify} from "../slices/SpotifySlice.ts";
+import {fetchYouTubePlaylists, fetchYouTubeUser, searchYouTubeMusic} from "../slices/YouTubeMusicSlice.ts";
 import {useDispatch, useSelector} from "react-redux";
 import SearchResult from "../components/SearchResult";
 import {search} from "../slices/SearchSlice.ts";
@@ -49,6 +49,12 @@ const SearchServicePage = () => {
         setResultCount(0);
     }
 
+    // Fetch authentication status on component mount
+    useEffect(() => {
+        dispatch(fetchSpotifyUser(username));
+        dispatch(fetchYouTubeUser());
+    }, []);
+
     useEffect(() => {
         clearSearchResults();
         if (serviceId === "Spotify") {
@@ -65,19 +71,29 @@ const SearchServicePage = () => {
         }
     }, [searchQuery, spotifySearchResults, youTubeMusicSearchResults, musicConnectSearchResults]);
 
+    // Update authentication state when auth status changes
+    useEffect(() => {
+        if (serviceId === "Spotify") {
+            setIsAuthenticated(spotifyUserAuthenticated);
+        }
+        else if (serviceId === "YouTube Music") {
+            setIsAuthenticated(youTubeUserAuthenticated);
+        }
+        else {
+            setIsAuthenticated(youTubeUserAuthenticated || spotifyUserAuthenticated);
+        }
+    }, [spotifyUserAuthenticated, youTubeUserAuthenticated, serviceId]);
+
     useEffect(() => {
         fetchPlaylists();
         if (serviceId === "Spotify") {
             searchSpotifyService();
-            setIsAuthenticated(spotifyUserAuthenticated);
         }
         else if (serviceId === "YouTube Music") {
             searchYouTubeService();
-            setIsAuthenticated(youTubeUserAuthenticated);
         }
         else {
             searchMusicConnect();
-            setIsAuthenticated(youTubeUserAuthenticated && spotifyUserAuthenticated);
         }
     }, [searchQuery]);
 
