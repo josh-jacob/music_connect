@@ -1,5 +1,5 @@
 # music_connect_ui/Dockerfile
-FROM node:16-slim
+FROM node:20-slim
 
 WORKDIR /app
 
