@@ -64,7 +64,7 @@ services:
     volumes:
       - ./music_connect/connectors/youtube_connector/youtube_oauth_credentials.json:/app/youtube_oauth_credentials.json:ro
     ports:
-      - "8082:8000"          # host 8082 -> container 8000
+      - "8000:8000"          # host 8000 -> container 8000
     networks:
       - musiconnect-net
 
