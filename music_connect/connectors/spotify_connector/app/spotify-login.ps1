@@ -1,6 +1,12 @@
+# Default to local if env var is not set
+$baseUrl = $env:BASE_URL
+if (-not $baseUrl) {
+    $baseUrl = "http://localhost:8081"
+}
+
 # Step 1 — Call /auth/login with the user-id header
 $response = Invoke-WebRequest `
-    -Uri "http://localhost:8081/auth/login" `
+    -Uri "$baseUrl/auth/login" `
     -Headers @{ "X-User-Id" = "testuser123" }
 
 Write-Host "Raw response:"

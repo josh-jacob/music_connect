@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     SPOTIFY_CLIENT_ID: str
     SPOTIFY_CLIENT_SECRET: str
     SPOTIFY_REDIRECT_URI: str
+    UI_BASE_URL: str = "http://localhost:3000"
 
     # --- OAuth Scopes ---
     SPOTIFY_SCOPES: str = (

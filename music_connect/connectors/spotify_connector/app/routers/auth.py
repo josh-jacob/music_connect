@@ -4,6 +4,7 @@ from typing import Optional
 import base64
 import requests
 import time
+import os
 
 from app.dependencies import get_user_id
 from app.services.spotify_service import SpotifyService
@@ -80,4 +81,6 @@ def callback(
     })
 
     # Redirect user to UI (same behavior as before)
-    return RedirectResponse("http://localhost:3000/spotify")
+    UI_BASE_URL = os.getenv("UI_BASE_URL", "http://localhost:3000")
+
+    return RedirectResponse(f"{UI_BASE_URL}/spotify")
