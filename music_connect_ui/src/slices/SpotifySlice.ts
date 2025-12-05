@@ -305,18 +305,23 @@ const SpotifySlice = createSlice({
                 state.loading = false;
                 state.searchResults = [];
                 const results = [];
-                for (let pos in action.payload) {
-                    results.push({
-                        id: action.payload[pos].id,
-                        name: action.payload[pos].name,
-                        artist: action.payload[pos].artists[0].name,
-                        album: action.payload[pos].album.name,
-                        albumCover: action.payload[pos].album.images[0].url,
-                        uri: action.payload[pos].uri,
-                        serviceId: "spotify"
-                    });
+                if (!action.payload.detail) {
+                    for (let pos in action.payload) {
+                        results.push({
+                            id: action.payload[pos].id,
+                            name: action.payload[pos].name,
+                            artist: action.payload[pos].artists[0].name,
+                            album: action.payload[pos].album.name,
+                            albumCover: action.payload[pos].album.images[0].url,
+                            uri: action.payload[pos].uri,
+                            serviceId: "spotify"
+                        });
+                    }
+                    state.searchResults = results;
                 }
-                state.searchResults = results;
+                else {
+                    state.error = action.payload.detail;
+                }
             })
             .addCase(searchSpotify.rejected, (state) => {
                 state.loading = false;

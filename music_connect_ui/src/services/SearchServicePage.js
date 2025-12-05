@@ -1,7 +1,7 @@
 import "./SearchServicePage.css";
 import SearchBar from "../components/SearchBar";
 import Header from "../components/Header";
-import {Button, CircularProgress} from "@mui/material";
+import {Alert, Button, CircularProgress} from "@mui/material";
 import {useNavigate, useSearchParams} from "react-router";
 import {useEffect, useState} from "react";
 import {fetchSpotifyPlaylists, searchSpotify} from "../slices/SpotifySlice.ts";
@@ -16,6 +16,7 @@ const SearchServicePage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const [resultCount, setResultCount] = useState(0);
     const [searchResults, setSearchResults] = useState([]);
+    const [isAuthenticated, setIsAuthenticated] = useState(true);
 
     const spotifySearchResults = useSelector((state) => state.spotify.searchResults);
     const musicConnectSearchResults = useSelector((state) => state.search.searchResults.tracks);
@@ -23,6 +24,9 @@ const SearchServicePage = () => {
     const spotifySearchResultsLoading = useSelector((state) => state.spotify.loading);
     const youTubeMusicSearchResults = useSelector((state) => state.youtubeMusic.searchResults);
     const youTubeMusicSearchResultsLoading = useSelector((state) => state.youtubeMusic.loading);
+    const youTubeUserAuthenticated = useSelector((state) => state.youtubeMusic.user.isAuthenticated);
+    const spotifyUserAuthenticated = useSelector((state) => state.spotify.user.authenticated);
+
     const username = localStorage.getItem("username");
 
     const serviceId = searchParams.get("sid");
@@ -63,14 +67,17 @@ const SearchServicePage = () => {
 
     useEffect(() => {
         fetchPlaylists();
-        if (serviceId === "spotify") {
+        if (serviceId === "Spotify") {
             searchSpotifyService();
+            setIsAuthenticated(spotifyUserAuthenticated);
         }
         else if (serviceId === "YouTube Music") {
             searchYouTubeService();
+            setIsAuthenticated(youTubeUserAuthenticated);
         }
         else {
             searchMusicConnect();
+            setIsAuthenticated(youTubeUserAuthenticated && spotifyUserAuthenticated);
         }
     }, [searchQuery]);
 
@@ -105,17 +112,21 @@ const SearchServicePage = () => {
                 <Button className="back-button" onClick={onBack} >Back</Button>
                 <SearchBar service={serviceId} q={searchQuery} />
             </div>
-            <div className="search-results">
-                {!(musicConnectSearchResultsLoading || spotifySearchResultsLoading || youTubeMusicSearchResultsLoading) ?
-                    <p className="result-count">{resultCount} Results</p>
-                : null }
-                {(musicConnectSearchResultsLoading || spotifySearchResultsLoading || youTubeMusicSearchResultsLoading) ? <div className={"results-loading-container"}>
-                    <CircularProgress className={"loading-spinner"} sx={{ alignSelf: "center" }}/>
-                </div> : null}
-                {!(musicConnectSearchResultsLoading || spotifySearchResultsLoading || youTubeMusicSearchResultsLoading) ? searchResults.map((result) => (
-                        <SearchResult name={result.name} artist={result.artist ?? result.channel} album={result.album} uri={result.uri ?? result.id} image={result.albumCover} serviceId={result.serviceId}/>
-                    )) : null }
-            </div>
+            {!isAuthenticated ?
+                <Alert severity="error">You need to connect your account to search.</Alert>
+                :
+                <div className="search-results">
+                    {!(musicConnectSearchResultsLoading || spotifySearchResultsLoading || youTubeMusicSearchResultsLoading) ?
+                        <p className="result-count">{resultCount} Results</p>
+                    : null }
+                    {(musicConnectSearchResultsLoading || spotifySearchResultsLoading || youTubeMusicSearchResultsLoading) ? <div className={"results-loading-container"}>
+                        <CircularProgress className={"loading-spinner"} sx={{ alignSelf: "center" }}/>
+                    </div> : null}
+                    {!(musicConnectSearchResultsLoading || spotifySearchResultsLoading || youTubeMusicSearchResultsLoading) ? searchResults.map((result) => (
+                            <SearchResult name={result.name} artist={result.artist ?? result.channel} album={result.album} uri={result.uri ?? result.id} image={result.albumCover} serviceId={result.serviceId}/>
+                        )) : null }
+                </div>
+            }
         </div>
     );
 };
