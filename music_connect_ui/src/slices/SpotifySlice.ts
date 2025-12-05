@@ -263,7 +263,18 @@ export const removeSpotifyTrackFromPlaylist = createAsyncThunk(
 const SpotifySlice = createSlice({
     name: "spotify",
     initialState,
-    reducers: {},
+    reducers: {
+        clearSpotifyAuth: (state) => {
+            state.user = {
+                id: null,
+                username: null,
+                email: null,
+                authenticated: false,
+            };
+            state.playlists = [];
+            state.searchResults = [];
+        }
+    },
     extraReducers: (builder) => {
         builder
             .addCase(loginToSpotify.pending, (state) => {
@@ -291,11 +302,26 @@ const SpotifySlice = createSlice({
                         email: action.payload.result.email,
                         authenticated: true,
                     };
+                } else {
+                    // Backend returned error (likely 401) - clear authentication
+                    state.user = {
+                        id: null,
+                        username: null,
+                        email: null,
+                        authenticated: false,
+                    };
                 }
             })
             .addCase(fetchSpotifyUser.rejected, (state) => {
                 state.loading = false;
                 state.error = "An error occurred";
+                // Clear authentication on error
+                state.user = {
+                    id: null,
+                    username: null,
+                    email: null,
+                    authenticated: false,
+                };
             })
             .addCase(searchSpotify.pending, (state) => {
                 state.loading = true;
@@ -345,18 +371,27 @@ const SpotifySlice = createSlice({
             .addCase(fetchSpotifyPlaylists.fulfilled, (state, action) => {
                 state.loading = false;
                 state.playlists = [];
-                for (let i in action.payload.items) {
-                    state.playlists.push({
-                        id: action.payload.items[i].id,
-                        name: action.payload.items[i].name,
-                        image: action.payload.items[i].images ? action.payload.items[i].images[0]?.url : "",
-                        tracks: []
-                    });
+                // Check if we got a valid response with items
+                if (action.payload && action.payload.items) {
+                    for (let i in action.payload.items) {
+                        state.playlists.push({
+                            id: action.payload.items[i].id,
+                            name: action.payload.items[i].name,
+                            image: action.payload.items[i].images ? action.payload.items[i].images[0]?.url : "",
+                            tracks: []
+                        });
+                    }
+                } else if (action.payload && action.payload.detail) {
+                    // Got an error response (401)
+                    state.user.authenticated = false;
+                    state.error = action.payload.detail;
                 }
             })
             .addCase(fetchSpotifyPlaylists.rejected, (state) => {
                 state.loading = false;
                 state.error = "An error occurred";
+                // Clear authentication on error
+                state.user.authenticated = false;
             })
             .addCase(fetchSpotifyPlaylistTracks.pending, (state) => {
                 state.loading = true;
@@ -425,4 +460,5 @@ const SpotifySlice = createSlice({
     },
 });
 
+export const { clearSpotifyAuth } = SpotifySlice.actions;
 export default SpotifySlice.reducer;

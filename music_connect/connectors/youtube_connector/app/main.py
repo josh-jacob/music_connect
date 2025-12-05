@@ -14,9 +14,6 @@ import os
 
 app = FastAPI()
 
-
-app = FastAPI()
-
 # Allow everything (development mode)
 app.add_middleware(
     CORSMiddleware,

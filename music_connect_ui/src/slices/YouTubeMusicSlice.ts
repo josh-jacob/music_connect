@@ -217,7 +217,17 @@ export const removeYouTubeTrackFromPlaylist = createAsyncThunk(
 const YouTubeMusicSlice = createSlice({
     name: "YouTubeMusic",
     initialState,
-    reducers: {},
+    reducers: {
+        clearYouTubeAuth: (state) => {
+            state.user = {
+                id: "",
+                name: "",
+                isAuthenticated: false,
+            };
+            state.playlists = [];
+            state.searchResults = [];
+        }
+    },
     extraReducers: (builder) => {
         builder
             .addCase(loginToYouTubeMusic.pending, (state) => {
@@ -361,4 +371,5 @@ const YouTubeMusicSlice = createSlice({
     },
 });
 
+export const { clearYouTubeAuth } = YouTubeMusicSlice.actions;
 export default YouTubeMusicSlice.reducer;

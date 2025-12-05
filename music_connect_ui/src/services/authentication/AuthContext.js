@@ -18,11 +18,16 @@ export const AuthProvider = ({ children }) => {
         const storedUser = sessionStorage.getItem('user');
 
         if (storedToken && storedUser) {
+            const parsedUser = JSON.parse(storedUser);
             setToken(storedToken);
-            setUser(JSON.parse(storedUser));
+            setUser(parsedUser);
             setAuthenticated(true);
+            // Ensure username is in localStorage for service pages
+            if (parsedUser.username) {
+                localStorage.setItem('username', parsedUser.username);
+            }
         }
-        setLoading(false); 
+        setLoading(false);
     }, []);
 
     // Login
@@ -32,6 +37,7 @@ export const AuthProvider = ({ children }) => {
 
             sessionStorage.setItem('token', data.token);
             sessionStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('username', data.user.username);
 
             if (rememberMe) {
                 localStorage.setItem('rememberedUsername', username);
@@ -75,6 +81,7 @@ export const AuthProvider = ({ children }) => {
             setAuthenticated(false);
             sessionStorage.removeItem('token');
             sessionStorage.removeItem('user');
+            localStorage.removeItem('username');
         }
     };
 
@@ -125,6 +132,7 @@ export const AuthProvider = ({ children }) => {
 
             sessionStorage.removeItem('token');
             sessionStorage.removeItem('user');
+            localStorage.removeItem('username');
             localStorage.removeItem('rememberedUsername');
             localStorage.removeItem('rememberedPassword');
 

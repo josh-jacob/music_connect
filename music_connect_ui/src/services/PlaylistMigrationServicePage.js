@@ -21,11 +21,12 @@ import {
 } from "@mui/material";
 import { useSelector } from "react-redux";
 import axios from 'axios';
+import { SPOTIFY_SERVICE_URL, YOUTUBE_SERVICE_URL, PLAYLIST_MIGRATION_SERVICE_URL } from '../config';
 
 const PlaylistMigrationServicePage = () => {
-    // Redux selectors - replace with your actual selectors
-    const userId = useSelector((state) => state.user?.userId || "testuser123");
-    
+    // Get username from localStorage (same as SpotifyServicePage)
+    const userId = localStorage.getItem("username") || "";
+
     // State
     const [spotifyPlaylists, setSpotifyPlaylists] = useState([]);
     const [youTubePlaylists, setYouTubePlaylists] = useState([]);
@@ -33,11 +34,11 @@ const PlaylistMigrationServicePage = () => {
     const [selectedPlaylist, setSelectedPlaylist] = useState(null);
     const [destinationPlaylists, setDestinationPlaylists] = useState([]);
     const [selectedDestinationPlaylist, setSelectedDestinationPlaylist] = useState(null);
-    
+
     const services = ["Spotify", "YouTube Music"];
     const [selectedSource, setSelectedSource] = useState("");
     const [selectedDestination, setSelectedDestination] = useState("");
-    
+
     // Migration settings
     const [threshold, setThreshold] = useState(60);
     const [loading, setLoading] = useState(false);
@@ -45,10 +46,19 @@ const PlaylistMigrationServicePage = () => {
     const [migrationResult, setMigrationResult] = useState(null);
     const [error, setError] = useState(null);
 
-    // API Configuration
-    const SPOTIFY_BASE = "http://localhost:8081";
-    const YOUTUBE_BASE = "http://localhost:8000";
-    const MIGRATION_BASE = "http://localhost:8083";
+    // API Configuration - use config instead of hardcoded URLs
+    const SPOTIFY_BASE = SPOTIFY_SERVICE_URL;
+    const YOUTUBE_BASE = YOUTUBE_SERVICE_URL;
+    const MIGRATION_BASE = PLAYLIST_MIGRATION_SERVICE_URL;
+
+    // Debug: Check if userId is available
+    useEffect(() => {
+        console.log("PlaylistMigration - userId:", userId);
+        if (!userId) {
+            console.warn("No userId found in localStorage. User may need to log in again.");
+            setError("No user session found. Please make sure you're logged in.");
+        }
+    }, [userId]);
 
     // Fetch playlists when source changes
     useEffect(() => {
@@ -107,7 +117,23 @@ const PlaylistMigrationServicePage = () => {
             }
         } catch (err) {
             console.error("Error fetching playlists:", err);
-            setError(`Failed to fetch ${selectedSource} playlists. Make sure you're authenticated.`);
+            console.error("Error details:", {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+                userId: userId
+            });
+
+            let errorMessage = `Failed to fetch ${selectedSource} playlists. `;
+            if (err.response?.status === 401) {
+                errorMessage += `Authentication failed. Please go to the ${selectedSource} page and connect your account first.`;
+            } else if (!userId) {
+                errorMessage += "No user ID found. Please log in again.";
+            } else {
+                errorMessage += `${err.response?.data?.detail || err.message || "Unknown error"}`;
+            }
+
+            setError(errorMessage);
         } finally {
             setFetchingPlaylists(false);
         }

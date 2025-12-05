@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 app = FastAPI(
     title="SpotifyConnectorService",
     version="1.0.0",
-    description="MusicConnect Spotify connector Wmicroservice",
+    description="MusicConnect Spotify connector microservice",
 )
 
 app.add_middleware(

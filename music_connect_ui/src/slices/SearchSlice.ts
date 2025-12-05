@@ -75,8 +75,9 @@ export const addTrackToPlaylist = createAsyncThunk(
     async (track: SpotifyTrack | YouTubeTrack) => {
         try {
             const headers = new Headers();
+            headers.set('Content-Type', 'application/json');
             const requestOptions = {
-                method: 'GET',
+                method: 'POST',
                 headers: headers,
                 body: JSON.stringify(track),
             };

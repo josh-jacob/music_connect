@@ -14,6 +14,7 @@ import YouTubeMusicServicePage from "./services/YouTubeMusicServicePage";
 import SearchServicePage from "./services/SearchServicePage";
 import ExportServicePage from "./services/ExportServicePage";
 import ExportPage from "./pages/ExportPage";
+import PlaylistMigrationServicePage from "./services/PlaylistMigrationServicePage";
 
 function App() {
   return (
@@ -37,7 +38,8 @@ function App() {
               <Route path="/spotify" element={<SpotifyServicePage />} />
               <Route path="/youtube-music" element={<YouTubeMusicServicePage />} />
               <Route path="/search" element={<SearchServicePage />} />
-              <Route path="/export" element={<ExportPage />} /> 
+              <Route path="/playlist-migration" element={<PlaylistMigrationServicePage />} />
+              <Route path="/export" element={<ExportPage />} />
             </Route>
 
             {/* Catch all - redirect to login */}
