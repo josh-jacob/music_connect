@@ -12,9 +12,8 @@ import Dashboard from "./services/Dashboard";
 import SpotifyServicePage from "./services/SpotifyServicePage";
 import YouTubeMusicServicePage from "./services/YouTubeMusicServicePage";
 import SearchServicePage from "./services/SearchServicePage";
-import PlaylistMigrationServicePage from "./services/PlaylistMigrationServicePage"; // ADDED THIS
-import ExportPage from "./pages/ExportPage";
 import PlaylistMigrationServicePage from "./services/PlaylistMigrationServicePage";
+import ExportPage from "./pages/ExportPage";
 
 function App() {
   return (
@@ -37,7 +36,6 @@ function App() {
               <Route path="/account" element={<AccountPage />} />
               <Route path="/spotify" element={<SpotifyServicePage />} />
               <Route path="/youtube-music" element={<YouTubeMusicServicePage />} />
-              <Route path="/:service/playlist/:playlistId" element={<PlaylistPage />} />
               <Route path="/search" element={<SearchServicePage />} />
               <Route path="/playlist-migration" element={<PlaylistMigrationServicePage />} />
               <Route path="/export" element={<ExportPage />} />
