@@ -57,21 +57,7 @@ services:
       - "8083:8000"          # host 8083 -> container 8000 (FastAPI)
     networks:
       - musicconnect-net
-
-  playlist-migration:
-    build:
-      context: ./services/playlist_migration  
-    container_name: musiconnect-playlist-migration
-    env_file:
-      - ./services/playlist_migration/.env
-    depends_on:
-      - spotify-connector
-      - youtube-connector
-    ports:
-      - "8006:8000"          # host 8006 -> container 8000
-    networks:
-      - musiconnect-net
-
+      
   spotify-connector:
     build:
       context: ./music_connect/connectors/spotify_connector
