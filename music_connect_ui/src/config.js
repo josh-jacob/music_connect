@@ -14,4 +14,4 @@ export const EXPORT_SERVICE_URL =
   process.env.REACT_APP_EXPORT_SERVICE_URL || '';
 
 export const PLAYLIST_MIGRATION_SERVICE_URL =
-  process.env.REACT_APP_PLAYLIST_MIGRATION_SERVICE_URL || '';
+  process.env.REACT_APP_PLAYLIST_MIGRATION_SERVICE_URL || 'http://localhost:8006';

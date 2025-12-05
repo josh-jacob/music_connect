@@ -46,9 +46,15 @@ const PlaylistMigrationServicePage = () => {
     const [error, setError] = useState(null);
 
     // API Configuration
-    const SPOTIFY_BASE = "http://localhost:8081";
-    const YOUTUBE_BASE = "http://localhost:8000";
-    const MIGRATION_BASE = "http://localhost:8083";
+    const SPOTIFY_BASE =
+      process.env.REACT_APP_SPOTIFY_SERVICE_URL || "http://localhost:8081";
+
+    const YOUTUBE_BASE =
+      process.env.REACT_APP_YOUTUBE_SERVICE_URL || "http://localhost:8082"; // browser talks to 8082, not 8000
+
+    const MIGRATION_BASE =
+      process.env.REACT_APP_PLAYLIST_MIGRATION_SERVICE_URL || "http://localhost:8006";
+
 
     // Fetch playlists when source changes
     useEffect(() => {
