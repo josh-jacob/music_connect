@@ -7,6 +7,7 @@
 
 # Environment files
 .env
+.env.production
 #.env.*  share env.example files instead
 
 # Logs and temp files
