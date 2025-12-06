@@ -74,15 +74,17 @@ Returns all items/videos inside a specific playlist.
 Automatically refreshes token if expired.
 """
 @app.get("/youtube/playlist/{playlist_id}/items")
-def get_playlist_items(playlist_id: str):
-
-      # Refresh expired token automatically
-    credentials = refresh_youtube_token()
+def get_playlist_items(
+    playlist_id: str,
+    x_user_id: str = Header(..., alias="X-User-Id"),
+):
+    # Refresh this user's token (per-user)
+    credentials = refresh_youtube_token(x_user_id)
     if credentials is None:
         return {"error": "Please login first using /auth/youtube/login"}
 
     youtube = get_authenticated_service(credentials)
-       
+
     items = []
     next_page_token = None
 
@@ -101,25 +103,24 @@ def get_playlist_items(playlist_id: str):
                 "title": snippet["title"],
                 "videoId": item["contentDetails"]["videoId"],
                 "thumbnail": snippet["thumbnails"]["default"]["url"],
-                "channel": snippet.get("videoOwnerChannelTitle")  # preferred field
-                            or snippet.get("channelTitle")        # fallback for older videos
+                "channel": snippet.get("videoOwnerChannelTitle")
+                           or snippet.get("channelTitle"),
             })
-
 
         next_page_token = response.get("nextPageToken")
         if not next_page_token:
             break
 
     return items
-
 """
 Returns all playlists owned by the authenticated user.
 Useful for UI playlist selection and migration features.
 """
 
 @app.get("/youtube/playlists")
-def get_user_playlists():
-    credentials = refresh_youtube_token()
+def get_user_playlists(x_user_id: str = Header(..., alias="X-User-Id")):
+    # Refresh this user's token (per-user)
+    credentials = refresh_youtube_token(x_user_id)
     if credentials is None:
         return {"error": "Please login first using /auth/youtube/login"}
 
@@ -160,12 +161,11 @@ def get_user_playlists():
 
     except HttpError as e:
         if e.resp.status == 404:
+            # No playlists or user has no channel
             return []
         raise e
 
     return playlists
-
-
 
 
 """
@@ -173,8 +173,12 @@ Search YouTube for videos matching a query.
 Used for track lookup before adding to a playlist.
 """
 @app.get("/youtube/search")
-def search_tracks(q: str):
-    credentials = refresh_youtube_token()
+def search_tracks(
+    q: str,
+    x_user_id: str = Header(..., alias="X-User-Id"),
+):
+    # Refresh per-user tokens
+    credentials = refresh_youtube_token(x_user_id)
     if credentials is None:
         return {"error": "Please login first using /auth/youtube/login"}
 
@@ -193,7 +197,7 @@ def search_tracks(q: str):
             "videoId": item["id"]["videoId"],
             "title": item["snippet"]["title"],
             "channel": item["snippet"]["channelTitle"],
-            "thumbnail": item["snippet"]["thumbnails"]["default"]["url"]
+            "thumbnail": item["snippet"]["thumbnails"]["default"]["url"],
         })
 
     return {"results": results}
@@ -202,8 +206,13 @@ def search_tracks(q: str):
 Add a video to a playlist.
 """
 @app.post("/youtube/playlist/{playlist_id}/add")
-def add_track_to_playlist(playlist_id: str, videoId: str):
-    credentials = refresh_youtube_token()
+def add_track_to_playlist(
+    playlist_id: str,
+    videoId: str,
+    x_user_id: str = Header(..., alias="X-User-Id"),
+):
+    # Refresh this user's token
+    credentials = refresh_youtube_token(x_user_id)
     if credentials is None:
         return {"error": "Please login first using /auth/youtube/login"}
 
@@ -214,8 +223,8 @@ def add_track_to_playlist(playlist_id: str, videoId: str):
             "playlistId": playlist_id,
             "resourceId": {
                 "kind": "youtube#video",
-                "videoId": videoId
-            }
+                "videoId": videoId,
+            },
         }
     }
 
@@ -227,7 +236,7 @@ def add_track_to_playlist(playlist_id: str, videoId: str):
     return {
         "status": "added",
         "playlistItemId": response["id"],
-        "videoId": videoId
+        "videoId": videoId,
     }
 
 """
@@ -236,27 +245,43 @@ The YouTube API requires a playlistItemId,
 so we first search for which playlist item matches the given videoId.
 """
 @app.delete("/youtube/playlist/{playlist_id}/remove")
-def remove_track_from_playlist(playlist_id: str, videoId: str):
-    credentials = refresh_youtube_token()
+def remove_track_from_playlist(
+    playlist_id: str,
+    videoId: str,
+    x_user_id: str = Header(..., alias="X-User-Id"),
+):
+    # Refresh this user's token
+    credentials = refresh_youtube_token(x_user_id)
     if credentials is None:
         return {"error": "Please login first using /auth/youtube/login"}
 
     youtube = get_authenticated_service(credentials)
 
     # Step 1 — find playlistItemId
-    search = youtube.playlistItems().list(
-        part="id,contentDetails",
-        playlistId=playlist_id,
-        maxResults=50
-    ).execute()
-
+    next_page_token = None
     playlist_item_id = None
-    for item in search["items"]:
-        if item["contentDetails"]["videoId"] == videoId:
-            playlist_item_id = item["id"]
+
+    while True:
+        search = youtube.playlistItems().list(
+            part="id,contentDetails",
+            playlistId=playlist_id,
+            maxResults=50,
+            pageToken=next_page_token
+        ).execute()
+
+        for item in search.get("items", []):
+            if item["contentDetails"]["videoId"] == videoId:
+                playlist_item_id = item["id"]
+                break
+
+        if playlist_item_id:
             break
 
-    if playlist_item_id is None:
+        next_page_token = search.get("nextPageToken")
+        if not next_page_token:
+            break
+
+    if not playlist_item_id:
         return {"error": "Track not found in playlist"}
 
     # Step 2 — remove it
@@ -265,7 +290,7 @@ def remove_track_from_playlist(playlist_id: str, videoId: str):
     return {
         "status": "removed",
         "playlistItemId": playlist_item_id,
-        "videoId": videoId
+        "videoId": videoId,
     }
 
 class CreatePlaylistRequest(BaseModel):
@@ -275,8 +300,12 @@ class CreatePlaylistRequest(BaseModel):
 
 
 @app.post("/youtube/playlists/create")
-def create_playlist(body: CreatePlaylistRequest):
-    credentials = refresh_youtube_token()
+def create_playlist(
+    body: CreatePlaylistRequest,
+    x_user_id: str = Header(..., alias="X-User-Id"),
+):
+    # Load/refresh this user's YouTube credentials
+    credentials = refresh_youtube_token(x_user_id)
     if credentials is None:
         return {"error": "Please login first using /auth/youtube/login"}
 
@@ -285,11 +314,11 @@ def create_playlist(body: CreatePlaylistRequest):
     playlist_body = {
         "snippet": {
             "title": body.title,
-            "description": body.description
+            "description": body.description,
         },
         "status": {
-            "privacyStatus": body.privacy
-        }
+            "privacyStatus": body.privacy,
+        },
     }
 
     response = youtube.playlists().insert(
@@ -300,16 +329,16 @@ def create_playlist(body: CreatePlaylistRequest):
     return {
         "status": "created",
         "playlistId": response["id"],
-        "title": body.title
+        "title": body.title,
     }
 
 @app.get("/youtube/me")
-def get_user_info():
+def get_user_info(x_user_id: str = Header(..., alias="X-User-Id")):
     """
     Returns basic information about the authenticated YouTube user.
     Safe for all users, even those without channels.
     """
-    credentials = refresh_youtube_token()
+    credentials = refresh_youtube_token(x_user_id)
     if credentials is None:
         return {"error": "Please login first using /auth/youtube/login"}
     
@@ -320,6 +349,7 @@ def get_user_info():
         mine=True
     ).execute()
 
+    # User may have no channel
     if not response.get("items"):
         return {
             "channelId": None,
@@ -327,7 +357,7 @@ def get_user_info():
             "description": None,
             "profileImage": None,
             "country": None,
-            "uploadsPlaylistId": None
+            "uploadsPlaylistId": None,
         }
 
     data = response["items"][0]
@@ -340,7 +370,9 @@ def get_user_info():
         "description": snippet.get("description"),
         "profileImage": thumbnails.get("default", {}).get("url"),
         "country": snippet.get("country"),
-        "uploadsPlaylistId": data.get("contentDetails", {})
-                                 .get("relatedPlaylists", {})
-                                 .get("uploads")
+        "uploadsPlaylistId": (
+            data.get("contentDetails", {})
+                .get("relatedPlaylists", {})
+                .get("uploads")
+        ),
     }
