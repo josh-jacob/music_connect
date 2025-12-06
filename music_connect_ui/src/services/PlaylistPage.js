@@ -58,6 +58,7 @@ const PlaylistPage = () => {
         }
         else {
             await dispatch(removeYouTubeTrackFromPlaylist({
+                userId: username,
                 playlistId: playlistId,
                 videoId: trackId,
             }));
@@ -70,7 +71,7 @@ const PlaylistPage = () => {
             await dispatch(fetchSpotifyPlaylistTracks({userId: username, playlistId: playlistId}));
         }
         else { // service === YouTube
-            await dispatch(fetchYouTubePlaylistTracks(playlistId));
+            await dispatch(fetchYouTubePlaylistTracks({userId: username, playlistId: playlistId}));
         }
     };
 

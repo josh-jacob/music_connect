@@ -20,7 +20,7 @@ const SearchResultItem = ({name, artist, album, uri, image, serviceId}) => {
             await dispatch(addSpotifyTrackToPlaylist({userId: username, playlistId: id, tracks: track }));
         }
         else { //serviceId === "youtube"
-            await dispatch(addYouTubeTrackToPlaylist({playlistId: id, videoId: uri }));
+            await dispatch(addYouTubeTrackToPlaylist({userId: username, playlistId: id, videoId: uri }));
         }
         setOpenAddTrackToPlaylistModal(false);
     };

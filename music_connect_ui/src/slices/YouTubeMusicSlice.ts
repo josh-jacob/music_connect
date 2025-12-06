@@ -34,7 +34,7 @@ interface YouTubeMusicSlice {
     query: string,
     error: string,
     loading: boolean,
-    results: SearchResponse,
+    results: SearchResponse | null;
 }
 
 const initialState: YouTubeMusicSlice = {
@@ -53,74 +53,124 @@ const initialState: YouTubeMusicSlice = {
 
 export const loginToYouTubeMusic = createAsyncThunk(
     "YouTubeMusic/login",
-    async () => {
+    async (userId: string) => {
         try {
+            if (!userId) {
+                throw new Error("Missing userId for YouTube login");
+            }
 
-            // Call to login
-            window.location.href = `${YOUTUBE_SERVICE_URL}/auth/youtube/login`;
-        } catch (error) {
-            throw (error.message);
+            // Prepare headers
+            const headers = new Headers();
+            headers.set("X-User-Id", userId);
+
+            // Call backend to get the OAuth URL
+            const response = await fetch(
+                `${YOUTUBE_SERVICE_URL}/auth/youtube/login`,
+                {
+                    method: "GET",
+                    headers: headers,
+                }
+            );
+
+            const data = await response.json();
+
+            if (!data.auth_url) {
+                console.error("YouTube login: Missing auth_url", data);
+                throw new Error("Failed to start YouTube OAuth flow");
+            }
+
+            // Redirect user to Google OAuth
+            window.location.href = data.auth_url;
+
+            return data;
+        } catch (error: any) {
+            throw error.message ?? error;
         }
     }
 );
 
 export const fetchYouTubeUser = createAsyncThunk(
     "YouTubeMusic/fetchUser",
-    async () => {
+    async (userId: string) => {
         try {
+            if (!userId) {
+                throw new Error("Missing userId for YouTube user fetch");
+            }
+
             const headers = new Headers();
-            const requestOptions = {
-                method: 'GET',
-                headers: headers
-            };
+            headers.set("X-User-Id", userId);
 
-            // Call to get user
-            const response = await fetch(`${YOUTUBE_SERVICE_URL}/youtube/me`, requestOptions);
+            const response = await fetch(
+                `${YOUTUBE_SERVICE_URL}/youtube/me`,
+                {
+                    method: "GET",
+                    headers: headers,
+                }
+            );
 
-            return await response.json();
-        } catch (error) {
-            throw (error.message);
+            const result = await response.json();
+            return { status: response.ok, result };
+        } catch (error: any) {
+            throw error.message ?? error;
         }
     }
 );
 
 export const searchYouTubeMusic = createAsyncThunk(
     "YouTubeMusic/search",
-    async (query) => {
+    async ({ query, userId }: { query: string; userId: string }) => {
         try {
+            if (!userId) {
+                throw new Error("Missing userId for YouTube search");
+            }
+
             const headers = new Headers();
+            headers.set("X-User-Id", userId);
 
             const requestOptions = {
-                method: 'GET',
-                headers: headers
+                method: "GET",
+                headers: headers,
             };
 
-            // Call to search YouTubeMusic
-            const response = await fetch(`${YOUTUBE_SERVICE_URL}/youtube/search?q=${query}`, requestOptions);
+            const response = await fetch(
+                `${YOUTUBE_SERVICE_URL}/youtube/search?q=${encodeURIComponent(query)}`,
+                requestOptions
+            );
 
-            return await response.json();
-        } catch (error) {
-            throw (error.message);
+            const data = await response.json();
+            return data;
+        } catch (error: any) {
+            throw (error.message ?? error);
         }
     }
 );
 
 export const fetchYouTubePlaylists = createAsyncThunk(
     "YouTubeMusic/fetchPlaylists",
-    async () => {
+    async (userId: string) => {
         try {
+            if (!userId) {
+                throw new Error("Missing userId for YouTube playlists fetch");
+            }
+
             const headers = new Headers();
+            headers.set("X-User-Id", userId);
+
             const requestOptions = {
-                method: 'GET',
-                headers: headers
+                method: "GET",
+                headers: headers,
             };
 
             // Call to fetch user playlists
-            const response = await fetch(`${YOUTUBE_SERVICE_URL}/youtube/playlists`, requestOptions);
+            const response = await fetch(
+                `${YOUTUBE_SERVICE_URL}/youtube/playlists`,
+                requestOptions
+            );
 
-            return await response.json();
-        } catch (error) {
-            throw (error.message);
+            const data = await response.json();
+            return data;
+        } catch (error: any) {
+            throw (error.message ?? error);
         }
     }
 );
@@ -128,88 +178,147 @@ export const fetchYouTubePlaylists = createAsyncThunk(
 
 export const fetchYouTubePlaylistTracks = createAsyncThunk(
     "YouTubeMusic/fetchPlaylistTracks",
-    async (playlistId: string) => {
+    async ({ playlistId, userId }: { playlistId: string; userId: string }) => {
         try {
+            if (!userId) {
+                throw new Error("Missing userId for YouTube playlist tracks fetch");
+            }
+
             const headers = new Headers();
+            headers.set("X-User-Id", userId);
+
             const requestOptions = {
-                method: 'GET',
-                headers: headers
+                method: "GET",
+                headers: headers,
             };
 
-            // Call to fetch all track in the playlist
-            const response = await fetch(`${YOUTUBE_SERVICE_URL}/youtube/playlist/${playlistId}/items`, requestOptions);
+            // Call to fetch all tracks in the playlist
+            const response = await fetch(
+                `${YOUTUBE_SERVICE_URL}/youtube/playlist/${playlistId}/items`,
+                requestOptions
+            );
 
             const result = await response.json();
-            return {playlistId, result};
-        } catch (error) {
-            throw (error.message);
+            return { playlistId, result };
+        } catch (error: any) {
+            throw (error.message ?? error);
         }
     }
 );
 
 export const createYouTubePlaylist = createAsyncThunk(
     "YouTubeMusic/createPlaylist",
-    async (params: {name: string, description: string, isPrivate: boolean}) => {
+    async ({
+        name,
+        description,
+        isPrivate,
+        userId,
+    }: {
+        name: string;
+        description: string;
+        isPrivate: boolean;
+        userId: string;
+    }) => {
         try {
-            const {name, description, isPrivate} = params;
-            const headers = new Headers();
-            headers.append('Content-Type', 'application/json');
-            const requestOptions = {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify({title: name, description, privacy: isPrivate ? "private" : "public"}),
-            };
+            if (!userId) {
+                throw new Error("Missing userId for playlist creation");
+            }
 
-            // Call to create new playlist for user
-            const response = await fetch(`${YOUTUBE_SERVICE_URL}/youtube/playlists/create`, requestOptions);
+            const headers = new Headers();
+            headers.set("Content-Type", "application/json");
+            headers.set("X-User-Id", userId);
+
+            const body = JSON.stringify({
+                title: name,
+                description,
+                privacy: isPrivate ? "private" : "public",
+            });
+
+            const response = await fetch(
+                `${YOUTUBE_SERVICE_URL}/youtube/playlists/create`,
+                {
+                    method: "POST",
+                    headers,
+                    body,
+                }
+            );
 
             return await response.json();
-        } catch (error) {
-            throw (error.message);
+        } catch (error: any) {
+            throw error.message ?? error;
         }
     }
 );
 
 export const addYouTubeTrackToPlaylist = createAsyncThunk(
     "YouTubeMusic/addTrackToPlaylist",
-    async (params: {playlistId: string, videoId: string}) => {
+    async ({
+        playlistId,
+        videoId,
+        userId,
+    }: {
+        playlistId: string;
+        videoId: string;
+        userId: string;
+    }) => {
         try {
-            const {playlistId, videoId} = params;
-            const headers = new Headers();
-            headers.set('Content-Type', 'application/json');
-            const requestOptions = {
-                method: 'POST',
-                headers: headers
-            };
+            if (!userId) {
+                throw new Error("Missing userId for adding track");
+            }
 
-            // Call to add track to playlist
-            const response = await fetch(`${YOUTUBE_SERVICE_URL}/youtube/playlist/${playlistId}/add?videoId=${videoId}`, requestOptions);
+            const headers = new Headers();
+            headers.set("Content-Type", "application/json");
+            headers.set("X-User-Id", userId);
+
+            const response = await fetch(
+                `${YOUTUBE_SERVICE_URL}/youtube/playlist/${playlistId}/add?videoId=${videoId}`,
+                {
+                    method: "POST",
+                    headers,
+                }
+            );
 
             return await response.json();
-        } catch (error) {
-            throw (error.message);
+        } catch (error: any) {
+            throw error.message ?? error;
         }
     }
 );
 
 export const removeYouTubeTrackFromPlaylist = createAsyncThunk(
     "YouTubeMusic/removeTrackFromPlaylist",
-    async (params: {playlistId: string, videoId: string}) => {
+    async ({
+        playlistId,
+        videoId,
+        userId,
+    }: {
+        playlistId: string;
+        videoId: string;
+        userId: string;
+    }) => {
         try {
-            const {playlistId, videoId} = params;
+            if (!userId) {
+                throw new Error("Missing userId for removing track from playlist");
+            }
+
             const headers = new Headers();
-            headers.set('Content-Type', 'application/json');
+            headers.set("Content-Type", "application/json");
+            headers.set("X-User-Id", userId);
+
             const requestOptions = {
-                method: 'DELETE',
-                headers: headers
+                method: "DELETE",
+                headers: headers,
             };
 
             // Call to remove track from playlist
-            const response = await fetch(`${YOUTUBE_SERVICE_URL}/youtube/playlist/${playlistId}/remove?videoId=${videoId}`, requestOptions);
+            const response = await fetch(
+                `${YOUTUBE_SERVICE_URL}/youtube/playlist/${playlistId}/remove?videoId=${videoId}`,
+                requestOptions
+            );
 
             return await response.json();
-        } catch (error) {
-            throw (error.message);
+        } catch (error: any) {
+            throw error.message ?? error;
         }
     }
 );

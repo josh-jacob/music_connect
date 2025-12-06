@@ -28,6 +28,7 @@ const YouTubeMusicServicePage = () => {
     const playlistsLoading = useSelector((state) => state.youtubeMusic.loading);
 
     const [openCreatePlaylistModal, setOpenCreatePlaylistModal] = useState(false);
+    const username = localStorage.getItem("username");
 
     // Ignoring dependencies so the fetchUser is only called when the page loads.
     useEffect(() => {
@@ -39,26 +40,27 @@ const YouTubeMusicServicePage = () => {
     }, [playlists.length]);
 
     const fetchPlaylists = async () => {
-        await dispatch(fetchYouTubePlaylists());
+        await dispatch(fetchYouTubePlaylists(username));
     };
 
     const getUser = async () => {
-        await dispatch(fetchYouTubeUser());
+        await dispatch(fetchYouTubeUser(username));
     };
 
     const createPlaylist = async (name, description, isPrivate) => {
         const createPlaylistRequest = {
-            name: name,
-            description: description,
-            isPrivate: isPrivate,
+            name,
+            description,
+            isPrivate,
+            userId: username,    // <-- THIS is correct
         };
 
-        await dispatch(createYouTubePlaylist(createPlaylistRequest));
+        await dispatch(createYouTubePlaylist(createPlaylistRequest)); // <-- use it!
         setOpenCreatePlaylistModal(false);
     };
 
     const authenticateUser = async () => {
-        await dispatch(loginToYouTubeMusic());
+        await dispatch(loginToYouTubeMusic(userId));
     };
 
     return (

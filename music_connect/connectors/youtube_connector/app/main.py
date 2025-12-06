@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Header
+from fastapi import FastAPI, Request, Header, HTTPException
 from dotenv import load_dotenv
 load_dotenv()
 from fastapi.responses import RedirectResponse
@@ -28,7 +28,19 @@ Redirect user to Google's OAuth page.
 Requests offline access so we get a refresh token.
 """
 @app.get("/auth/youtube/login")
-def youtube_login(x_user_id: str = Header(..., alias="X-User-Id")):
+def youtube_login(x_user_id: str | None = Header(default=None, alias="X-User-Id")):
+    """
+    Start the YouTube OAuth flow for this MusiConnect user.
+
+    Returns JSON with the Google auth URL instead of redirecting directly,
+    so the frontend can control window.location.
+    """
+    if not x_user_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Missing X-User-Id header. The UI must send the current user id.",
+        )
+
     flow = get_flow()
     auth_url, _ = flow.authorization_url(
         prompt="consent",
@@ -36,8 +48,9 @@ def youtube_login(x_user_id: str = Header(..., alias="X-User-Id")):
         include_granted_scopes="true",
         state=x_user_id,  # carry user id through OAuth
     )
-    return RedirectResponse(auth_url)
 
+    # Return JSON instead of RedirectResponse
+    return {"auth_url": auth_url}
 """
 Google redirects here after user logs in.
 We exchange the 'code' for access + refresh tokens

@@ -52,7 +52,7 @@ const SearchServicePage = () => {
     // Fetch authentication status on component mount
     useEffect(() => {
         dispatch(fetchSpotifyUser(username));
-        dispatch(fetchYouTubeUser());
+        dispatch(fetchYouTubeUser(username));
     }, []);
 
     useEffect(() => {
@@ -99,14 +99,14 @@ const SearchServicePage = () => {
 
     const fetchPlaylists = async () => {
         if (serviceId === "YouTube Music") {
-            await dispatch(fetchYouTubePlaylists());
+            await dispatch(fetchYouTubePlaylists(username));
         }
         else if (serviceId === "Spotify") {
             await dispatch(fetchSpotifyPlaylists(username));
         }
         else {
             await dispatch(fetchSpotifyPlaylists(username));
-            await dispatch(fetchYouTubePlaylists());
+            await dispatch(fetchYouTubePlaylists(username));
         }
     }
     const searchSpotifyService = async () => {
@@ -114,7 +114,7 @@ const SearchServicePage = () => {
     }
 
     const searchYouTubeService = async () => {
-        await dispatch(searchYouTubeMusic(searchQuery));
+        await dispatch(searchYouTubeMusic({ userId: username, query: searchQuery}));
     }
 
     const searchMusicConnect = async () => {
