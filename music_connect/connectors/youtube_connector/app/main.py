@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Header
 from dotenv import load_dotenv
 load_dotenv()
 from fastapi.responses import RedirectResponse
@@ -28,12 +28,13 @@ Redirect user to Google's OAuth page.
 Requests offline access so we get a refresh token.
 """
 @app.get("/auth/youtube/login")
-def youtube_login():
+def youtube_login(x_user_id: str = Header(..., alias="X-User-Id")):
     flow = get_flow()
     auth_url, _ = flow.authorization_url(
-    prompt="consent",
-    access_type="offline",
-    include_granted_scopes="true"
+        prompt="consent",
+        access_type="offline",
+        include_granted_scopes="true",
+        state=x_user_id,  # carry user id through OAuth
     )
     return RedirectResponse(auth_url)
 
@@ -45,25 +46,27 @@ and save them locally so the user only logs in once.
 @app.get("/auth/youtube/callback")
 def youtube_callback(request: Request):
     code = request.query_params.get("code")
+    user_id = request.query_params.get("state")  # comes from youtube_login
+
+    if not user_id:
+        # safety: don't save tokens without knowing which user they belong to
+        return {"error": "Missing user state; cannot associate YouTube tokens."}
+
     flow = get_flow()
     flow.fetch_token(code=code)
     credentials = flow.credentials
-    
+
     token_data = {
         "access_token": credentials.token,
         "refresh_token": credentials.refresh_token,
         "expires_at": credentials.expiry.isoformat(),
-        "scopes": credentials.scopes
+        "scopes": credentials.scopes,
     }
-    save_tokens(token_data)
+    save_tokens(user_id, token_data)
 
     ui_url = os.getenv("YOUTUBE_UI_REDIRECT_URL")
-
-    # If UI redirect is configured → redirect to UI
     if ui_url:
         return RedirectResponse(ui_url)
-
-    # Otherwise return JSON for easier local testing
     return {"message": "YouTube connected and tokens saved!"}
 
 """
